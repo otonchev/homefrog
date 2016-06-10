@@ -41,7 +41,7 @@ G_BEGIN_DECLS
 typedef struct _ShpPlugin ShpPlugin;
 typedef struct _ShpPluginClass ShpPluginClass;
 
-#define SHP_PLUGIN_INIT(init)		\
+#define SHP_PLUGIN_REGISTER(init)	\
 G_BEGIN_DECLS				\
 void shp_plugin_register ();		\
 					\

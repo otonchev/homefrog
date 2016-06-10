@@ -79,6 +79,7 @@ gboolean shp_component_stop (ShpComponent * component);
 ShpBus* shp_component_get_bus (ShpComponent * component);
 ShpComponent* shp_component_get_parent (ShpComponent * component);
 void shp_component_set_parent (ShpComponent * component, ShpComponent * parent);
+const gchar* shp_component_get_name (ShpComponent * component);
 
 GType shp_component_get_type (void);
 

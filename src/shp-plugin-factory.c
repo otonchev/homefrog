@@ -49,7 +49,7 @@ shp_plugin_factory_create (gchar * name)
 
   object_type = GPOINTER_TO_UINT (tmp);
 
-  plugin = g_object_new (object_type, NULL);
+  plugin = g_object_new (object_type, "name", name, NULL);
 
   return plugin;
 }

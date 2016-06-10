@@ -39,6 +39,8 @@ G_BEGIN_DECLS
 #define IS_SHP_BASE1WIRE_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), SHP_BASE1WIRE_TYPE))
 #define SHP_BASE1WIRE_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), SHP_BASE1WIRE_TYPE, ShpBase1wireClass))
 
+#define SHP_BASE1WIRE_INVALID_READING -256
+
 typedef struct _ShpBase1wire ShpBase1wire;
 typedef struct _ShpBase1wireClass ShpBase1wireClass;
 
@@ -55,9 +57,6 @@ struct _ShpBase1wire {
   GThread *thread;
 
   gchar *device_id;
-  gdouble trigger;
-  gboolean descending;
-
   gboolean active;
 };
 

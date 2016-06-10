@@ -26,10 +26,13 @@
 
 #include "shp-component.h"
 
+#define DEFAULT_NAME "<no_name>"
+
 enum
 {
   PROP_0,
   PROP_BUS,
+  PROP_NAME,
   PROP_LAST
 };
 
@@ -44,6 +47,7 @@ struct _ShpComponentPrivate {
   ShpComponent *parent;
   ShpBus *bus;
   gboolean started;
+  gchar *name;
 };
 
 static void shp_component_finalize (GObject * object);
@@ -62,6 +66,11 @@ shp_component_class_init (ShpComponentClass * klass)
           "Event Bus used by components for exchanging messages",
           SHP_BUS_TYPE, G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 
+  g_object_class_install_property (gobject_class, PROP_BUS,
+      g_param_spec_string ("name", "Component name",
+          "The name of the component", DEFAULT_NAME,
+          G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
+
   gobject_class->finalize = shp_component_finalize;
   gobject_class->set_property = shp_component_set_property;
   gobject_class->get_property = shp_component_get_property;
@@ -73,6 +82,7 @@ shp_component_init (ShpComponent * self)
   self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self,
                                             SHP_COMPONENT_TYPE,
                                             ShpComponentPrivate);
+  self->priv->name = g_strdup (DEFAULT_NAME);
 }
 
 static void
@@ -89,6 +99,9 @@ shp_component_finalize (GObject * object)
     g_object_unref (priv->parent);
     priv->parent = NULL;
   }
+
+  g_free (priv->name);
+  priv->name = NULL;
 }
 
 static void
@@ -100,6 +113,9 @@ shp_component_get_property (GObject * object, guint propid,
   switch (propid) {
     case PROP_BUS:
       g_value_set_object (value, component->priv->bus);
+      break;
+    case PROP_NAME:
+      g_value_set_string (value, component->priv->name);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, propid, pspec);
@@ -115,6 +131,10 @@ shp_component_set_property (GObject * object, guint propid,
   switch (propid) {
     case PROP_BUS:
       component->priv->bus = g_value_get_object (value);
+      break;
+    case PROP_NAME:
+      g_free (component->priv->name);
+      component->priv->name = g_strdup (g_value_get_string (value));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, propid, pspec);
@@ -212,7 +232,9 @@ shp_component_get_bus (ShpComponent * component)
 
   priv = component->priv;
 
-  return priv->bus;
+  if (!priv->bus)
+    return NULL;
+  return g_object_ref (priv->bus);
 }
 
 ShpComponent*
@@ -224,6 +246,8 @@ shp_component_get_parent (ShpComponent * component)
 
   priv = component->priv;
 
+  if (!priv->parent)
+    return NULL;
   return g_object_ref (priv->parent);
 }
 
@@ -240,4 +264,16 @@ shp_component_set_parent (ShpComponent * component, ShpComponent * parent)
   if (priv->parent != NULL)
     g_object_unref (priv->parent);
   priv->parent = g_object_ref (parent);
+}
+
+const gchar*
+shp_component_get_name (ShpComponent * component)
+{
+  ShpComponentPrivate *priv;
+
+  g_return_val_if_fail (IS_SHP_COMPONENT (component), NULL);
+
+  priv = component->priv;
+
+  return priv->name;
 }

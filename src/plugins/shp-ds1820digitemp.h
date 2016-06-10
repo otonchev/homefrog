@@ -63,8 +63,6 @@ struct _ShpDs1820digitempClass {
   glong ts;
 };
 
-void shp_plugin_register (void);
-
 GType shp_ds1820digitemp_get_type (void);
 
 G_END_DECLS

@@ -64,10 +64,15 @@ shp_bus_new ()
 gboolean
 shp_bus_post (ShpBus *bus, ShpMessage *message)
 {
-  if (bus->func == NULL)
+  g_debug ("posted message: %s", shp_message_get_name (message));
+
+  if (bus->func == NULL) {
+    g_object_unref (message);
     return FALSE;
+  }
 
   bus->func (bus, message, bus->data);
+  g_object_unref (message);
 
   return TRUE;
 }

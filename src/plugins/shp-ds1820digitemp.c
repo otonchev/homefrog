@@ -21,9 +21,6 @@
  * (digitemp needs to be installed and running).
  * The digitemp.conf must also be present in the 'config-dir' directory.
  *
- * It also implements the 1Wire interface which allows handling 1Wire supported
- * networks in an unified manner.
- *
  * digitemp.conf:
  *
  *	TTY /dev/ttyUSB0
@@ -45,32 +42,18 @@
  *
  * Properties inherited from baseplugin:
  *
- * interval=<integer>    Optional
  * device-id=<string>    Optional
- * trigger=<double>      Optional
- * descending=<boolean>  Optional
  *
  * Properties for this plugin (Required):
  *
  * config-dir=<string>
- *
- * If 'trigger' is set, check_config () will succeed whenever sensor readings
- * match 'trigger' and 'descending'. If it is not set, check_config () will
- * always succeed and generate result of the following kind:
- *
- * SensorReading=<double>
- * ID=<string>
- *
- * This result can be used as input to other plugins.
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <glib.h>
 
-#include "../shp-data.h"
 #include "../shp-plugin-factory.h"
-#include "../shp-1wire.h"
 
 #include "shp-base1wire.h"
 #include "shp-ds1820digitemp.h"
@@ -93,13 +76,11 @@ enum
   PROP_LAST
 };
 
-static void shp_ds1820digitemp_interface_init (Shp1WireInterface * iface);
-static gboolean shp_ds1820digitemp_start (ShpPlugin * plugin);
-static void shp_ds1820digitemp_stop (ShpPlugin * plugin);
-static gfloat read_sensor_data (Shp1Wire * wire, const gchar * id);
+static gboolean shp_ds1820digitemp_start (ShpComponent * component);
+static gboolean shp_ds1820digitemp_stop (ShpComponent * component);
 static gfloat shp_ds1820digitemp_read_sensor_data (ShpBase1wire * self,
     const gchar * id);
-static GPtrArray* _read_sensors_data (Shp1Wire * wire);
+static GPtrArray* _read_sensors_data (ShpDs1820digitemp * self);
 static void shp_ds1820digitemp_finalize (GObject * object);
 
 static void shp_ds1820digitemp_get_property (GObject * object, guint propid,
@@ -114,9 +95,7 @@ struct _ShpSensorData
   gfloat reading;
 };
 
-G_DEFINE_TYPE_WITH_CODE (ShpDs1820digitemp, shp_ds1820digitemp,
-    SHP_BASE1WIRE_TYPE, G_IMPLEMENT_INTERFACE (SHP_TYPE_1WIRE,
-        shp_ds1820digitemp_interface_init));
+G_DEFINE_TYPE (ShpDs1820digitemp, shp_ds1820digitemp, SHP_BASE1WIRE_TYPE);
 
 static void
 shp_ds1820digitemp_class_init (ShpDs1820digitempClass * klass)
@@ -138,8 +117,8 @@ shp_ds1820digitemp_class_init (ShpDs1820digitempClass * klass)
           "Directory where digitemp.conf file is located", DEFAULT_CONFIG_DIR,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-  SHP_PLUGIN_CLASS (klass)->stop = shp_ds1820digitemp_stop;
-  SHP_PLUGIN_CLASS (klass)->start = shp_ds1820digitemp_start;
+  SHP_COMPONENT_CLASS (klass)->stop = shp_ds1820digitemp_stop;
+  SHP_COMPONENT_CLASS (klass)->start = shp_ds1820digitemp_start;
 
   g_mutex_init (&klass->mutex);
 }
@@ -215,7 +194,7 @@ read_data_cb (gpointer data)
   klass->ts = ts_now;
   if (klass->readings != NULL)
     g_ptr_array_unref (klass->readings);
-  klass->readings = _read_sensors_data (SHP_1WIRE (self));
+  klass->readings = _read_sensors_data (self);
 
   g_mutex_unlock (&klass->mutex);
 
@@ -235,25 +214,19 @@ shp_ds1820digitemp_finalize (GObject * object)
   g_free (self->config_dir);
 }
 
-static void
-shp_ds1820digitemp_interface_init (Shp1WireInterface * iface)
-{
-  iface->read_sensor_data = read_sensor_data;
-}
-
 static gboolean
-shp_ds1820digitemp_start (ShpPlugin * plugin)
+shp_ds1820digitemp_start (ShpComponent * component)
 {
-  ShpDs1820digitemp *self = SHP_DS1820DIGITEMP (plugin);
+  ShpDs1820digitemp *self = SHP_DS1820DIGITEMP (component);
   ShpDs1820digitempClass *klass;
   GSource *source;
 
-  g_return_val_if_fail (IS_SHP_DS1820DIGITEMP (plugin), FALSE);
+  g_return_val_if_fail (IS_SHP_DS1820DIGITEMP (component), FALSE);
 
   g_debug ("ds1820digitemp: starting");
 
   /* chain up to parent first */
-  if (!SHP_PLUGIN_CLASS (shp_ds1820digitemp_parent_class)->start (plugin)) {
+  if (!SHP_COMPONENT_CLASS (shp_ds1820digitemp_parent_class)->start (component)) {
     return FALSE;
   }
 
@@ -285,15 +258,15 @@ shp_ds1820digitemp_start (ShpPlugin * plugin)
   return TRUE;
 }
 
-static void
-shp_ds1820digitemp_stop (ShpPlugin * plugin)
+static gboolean
+shp_ds1820digitemp_stop (ShpComponent * component)
 {
-  ShpDs1820digitemp * self = SHP_DS1820DIGITEMP (plugin);
+  ShpDs1820digitemp * self = SHP_DS1820DIGITEMP (component);
 
-  g_return_if_fail (IS_SHP_DS1820DIGITEMP (plugin));
+  g_return_val_if_fail (IS_SHP_DS1820DIGITEMP (component), FALSE);
 
   /* chain up to parent first */
-  SHP_PLUGIN_CLASS (shp_ds1820digitemp_parent_class)->stop (plugin);
+  SHP_COMPONENT_CLASS (shp_ds1820digitemp_parent_class)->stop (component);
 
   if (self->loop != NULL) {
     g_main_loop_quit (self->loop);
@@ -307,6 +280,8 @@ shp_ds1820digitemp_stop (ShpPlugin * plugin)
     self->loop = NULL;
     self->context = NULL;
   }
+
+  return TRUE;
 }
 
 static void
@@ -318,25 +293,19 @@ free_sensor_data (gpointer data)
 }
 
 static gfloat
-shp_ds1820digitemp_read_sensor_data (ShpBase1wire * self, const gchar * id)
+shp_ds1820digitemp_read_sensor_data (ShpBase1wire * basewire, const gchar * id)
 {
-  return read_sensor_data (SHP_1WIRE (self), id);
-}
-
-static gfloat
-read_sensor_data (Shp1Wire * wire, const gchar * id)
-{
-  gfloat result = SHP_1WIRE_INVALID_READING;
+  gfloat result = SHP_BASE1WIRE_INVALID_READING;
   guint idx;
   GPtrArray *readings;
   ShpSensorData *reading;
   ShpDs1820digitemp *self;
   ShpDs1820digitempClass *klass;
 
-  g_return_val_if_fail (IS_SHP_DS1820DIGITEMP (wire),
-      SHP_1WIRE_INVALID_READING);
+  g_return_val_if_fail (IS_SHP_DS1820DIGITEMP (basewire),
+      SHP_BASE1WIRE_INVALID_READING);
 
-  self = SHP_DS1820DIGITEMP (wire);
+  self = SHP_DS1820DIGITEMP (basewire);
   klass = SHP_DS1820DIGITEMP_GET_CLASS (self);
 
   g_debug ("ds1820digitemp: reading sensor data: %s", id);
@@ -347,7 +316,7 @@ read_sensor_data (Shp1Wire * wire, const gchar * id)
   if (readings == NULL) {
     g_warning ("no readings found in cache, something broke?");
     g_mutex_unlock (&klass->mutex);
-    return SHP_1WIRE_INVALID_READING;
+    return SHP_BASE1WIRE_INVALID_READING;
   }
   for (idx = 0; idx < readings->len; idx++) {
     reading = g_ptr_array_index (readings, idx);
@@ -366,15 +335,14 @@ read_sensor_data (Shp1Wire * wire, const gchar * id)
 }
 
 static GPtrArray*
-_read_sensors_data (Shp1Wire * wire)
+_read_sensors_data (ShpDs1820digitemp * self)
 {
   FILE *fp;
   gchar line[1035];
   GPtrArray *result = NULL;
   gchar *command;
 
-  command = g_strdup_printf (DIGITEMP_COMMAND_ALL,
-      SHP_DS1820DIGITEMP (wire)->config_dir);
+  command = g_strdup_printf (DIGITEMP_COMMAND_ALL, self->config_dir);
 
   g_debug ("ds1820digitemp: reading sensors data. command: %s", command);
 
@@ -414,8 +382,10 @@ _read_sensors_data (Shp1Wire * wire)
   return result;
 }
 
-void
-shp_plugin_register (void)
+static void
+plugin_register (void)
 {
   shp_plugin_factory_register (NAME, SHP_DS1820DIGITEMP_TYPE);
 }
+
+SHP_PLUGIN_REGISTER (plugin_register);

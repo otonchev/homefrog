@@ -499,3 +499,10 @@ shp_message_get_field_type (ShpMessage * msg, const gchar * name)
   }
   return G_VALUE_TYPE (&value);
 }
+
+const char*
+shp_message_get_name (ShpMessage * msg)
+{
+  g_return_val_if_fail (IS_SHP_MESSAGE (msg), NULL);
+  return msg->name;
+}
