@@ -1,0 +1,9 @@
+.deps/
+shp-shp-message.o
+shp-shp-bus.o
+shp-shp-group.o
+shp-shp-plugin-factory.o
+shp-shp-plugin.o
+shp-main.o
+shp-shp-component.o
+shp
