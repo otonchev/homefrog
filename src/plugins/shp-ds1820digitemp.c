@@ -385,6 +385,7 @@ _read_sensors_data (ShpDs1820digitemp * self)
 static void
 plugin_register (void)
 {
+  g_debug ("%s: loading plugin", NAME);
   shp_plugin_factory_register (NAME, SHP_DS1820DIGITEMP_TYPE);
 }
 
