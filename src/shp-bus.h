@@ -38,9 +38,10 @@ G_BEGIN_DECLS
 #define SHP_BUS_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), SHP_BUS_TYPE, ShpBusClass))
 
 typedef struct _ShpBus ShpBus;
+typedef struct _ShpBusPrivate ShpBusPrivate;
 typedef struct _ShpBusClass ShpBusClass;
 
-typedef void (*ShpBusSyncHandler) (ShpBus * bus, ShpMessage * message,
+typedef void (*ShpBusMessageHandler) (ShpBus * bus, ShpMessage * message,
     gpointer user_data);
 
 struct _ShpBus {
@@ -49,9 +50,7 @@ struct _ShpBus {
   /*< protected >*/
 
   /*< private >*/
-  ShpBusSyncHandler func;
-  gpointer data;
-  GDestroyNotify notify;
+  ShpBusPrivate *priv;
 };
 
 struct _ShpBusClass {
@@ -62,8 +61,12 @@ struct _ShpBusClass {
 
 ShpBus* shp_bus_new ();
 gboolean shp_bus_post (ShpBus *bus, ShpMessage *message);
-void shp_bus_set_sync_handler (ShpBus *bus, ShpBusSyncHandler func,
+void shp_bus_set_sync_handler (ShpBus *bus, ShpBusMessageHandler func,
     gpointer user_data, GDestroyNotify notify);
+void shp_bus_add_async_handler (ShpBus *bus, ShpBusMessageHandler func,
+    gpointer user_data, GDestroyNotify notify);
+gboolean shp_bus_start (ShpBus *bus);
+gboolean shp_bus_stop (ShpBus *bus);
 
 GType shp_bus_get_type (void);
 

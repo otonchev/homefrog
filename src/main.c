@@ -20,7 +20,6 @@
 #include <glib.h>
 #include <gmodule.h>
 
-#include "shp-plugin.h"
 #include "shp-plugin-factory.h"
 
 typedef void (* PluginRegisterFunc) ();
