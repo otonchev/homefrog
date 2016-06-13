@@ -14,12 +14,13 @@ BUILT_SOURCES = $(GENERATED_C) $(GENERATED_H)
 
 shp_SOURCES = \
 	main.c \
-	shp-plugin.c \
-	shp-group.c \
-	shp-plugin-factory.c \
-	shp-message.c \
 	shp-bus.c \
-	shp-component.c
+	shp-component.c \
+	shp-group.c \
+	shp-message.c \
+	shp-plugin.c \
+	shp-plugin-factory.c \
+	shp-slave-plugin.c
 
 nodist_shp_SOURCES = $(GENERATED_C)
 noinst_HEADERS = $(GENERATED_H)
