@@ -64,7 +64,7 @@ gboolean shp_bus_post (ShpBus *bus, ShpMessage *message);
 void shp_bus_set_sync_handler (ShpBus *bus, ShpBusMessageHandler func,
     gpointer user_data, GDestroyNotify notify);
 void shp_bus_add_async_handler (ShpBus *bus, ShpBusMessageHandler func,
-    gpointer user_data, GDestroyNotify notify);
+    gpointer user_data, GDestroyNotify notify, const gchar * source_path);
 gboolean shp_bus_start (ShpBus *bus);
 gboolean shp_bus_stop (ShpBus *bus);
 

@@ -36,6 +36,7 @@ G_BEGIN_DECLS
 #define SHP_MESSAGE_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), SHP_MESSAGE_TYPE, ShpMessageClass))
 
 typedef struct _ShpMessage ShpMessage;
+typedef struct _ShpMessagePrivate ShpMessagePrivate;
 typedef struct _ShpMessageClass ShpMessageClass;
 
 typedef void (*ShpMessageFunc) (const gchar * name, const GValue * value,
@@ -47,8 +48,7 @@ struct _ShpMessage {
   /*< protected >*/
 
   /*< private >*/
-  GHashTable *values;
-  gchar *name;
+  ShpMessagePrivate *priv;
 };
 
 struct _ShpMessageClass {
@@ -57,7 +57,7 @@ struct _ShpMessageClass {
   /*< private >*/
 };
 
-ShpMessage* shp_message_new (const gchar * name);
+ShpMessage* shp_message_new (const gchar * name, const gchar * source_path);
 
 void shp_message_add_string (ShpMessage * msg, const gchar * name, const gchar * value);
 void shp_message_add_integer (ShpMessage * msg, const gchar * name, gint value);
@@ -79,6 +79,7 @@ guint shp_message_size (ShpMessage * msg);
 void shp_message_foreach (ShpMessage * msg, ShpMessageFunc func, gpointer user_data);
 
 const char *shp_message_get_name (ShpMessage * msg);
+const char *shp_message_get_source_path (ShpMessage * msg);
 
 GType shp_message_get_type (void);
 

@@ -139,8 +139,6 @@ dispatch_cb (gpointer user_data)
   ShpComponent *component = SHP_COMPONENT (user_data);
   ShpBase1wire *self = SHP_BASE1WIRE (component);
   ShpMessage *msg;
-  ShpComponent *parent;
-  ShpBus *bus;
   gfloat reading;
 
   g_debug ("base1wire: reading sensor data");
@@ -156,25 +154,12 @@ dispatch_cb (gpointer user_data)
     return TRUE;
   }
 
-  parent = shp_component_get_parent (component);
-  if (!parent) {
-    g_warning ("plugin has no parent");
-    return TRUE;
-  }
-
-  bus = shp_component_get_bus (parent);
-  if (!bus) {
-    g_warning ("parent element has no bus");
-    g_object_unref (parent);
-    return TRUE;
-  }
-
-  g_object_unref (parent);
-
-  msg = shp_message_new (shp_component_get_name (component));
+  msg = shp_message_new (shp_component_get_name (component),
+      shp_component_get_path (component));
   shp_message_add_double (msg, "reading", reading);
-  shp_bus_post (bus, msg);
-  g_object_unref (bus);
+
+  if (!shp_component_post_message (component, msg))
+    g_warning ("could not post message on bus");
 
   return TRUE;
 }

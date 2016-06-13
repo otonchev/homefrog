@@ -39,6 +39,7 @@ G_BEGIN_DECLS
 #define SHP_PLUGIN_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), SHP_PLUGIN_TYPE, ShpPluginClass))
 
 typedef struct _ShpPlugin ShpPlugin;
+typedef struct _ShpPluginPrivate ShpPluginPrivate;
 typedef struct _ShpPluginClass ShpPluginClass;
 
 #define SHP_PLUGIN_REGISTER(init)	\
@@ -61,6 +62,7 @@ struct _ShpPlugin {
   /*< protected >*/
 
   /*< private >*/
+  ShpPluginPrivate *priv;
 };
 
 /**

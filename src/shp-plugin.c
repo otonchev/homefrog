@@ -29,6 +29,9 @@
 
 G_DEFINE_TYPE (ShpPlugin, shp_plugin, SHP_COMPONENT_TYPE);
 
+struct _ShpPluginPrivate {
+};
+
 enum
 {
   PROP_0,
@@ -48,6 +51,8 @@ shp_plugin_class_init (ShpPluginClass * klass)
 
   gobject_class = G_OBJECT_CLASS (klass);
 
+  g_type_class_add_private (klass, sizeof (ShpPluginPrivate));
+
   gobject_class->finalize = shp_plugin_finalize;
   gobject_class->set_property = shp_plugin_set_property;
   gobject_class->get_property = shp_plugin_get_property;
@@ -56,6 +61,9 @@ shp_plugin_class_init (ShpPluginClass * klass)
 static void
 shp_plugin_init (ShpPlugin * self)
 {
+  self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self,
+                                            SHP_PLUGIN_TYPE,
+                                            ShpPluginPrivate);
 }
 
 static void

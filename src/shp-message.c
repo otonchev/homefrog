@@ -30,12 +30,20 @@ enum
 {
   PROP_0,
   PROP_NAME,
+  PROP_SOURCE_PATH,
   PROP_LAST
 };
 
 #define DEFAULT_NAME "no_name"
+#define DEFAULT_SOURCE_PATH "/empty path"
 
 G_DEFINE_TYPE (ShpMessage, shp_message, G_TYPE_OBJECT);
+
+struct _ShpMessagePrivate {
+  GHashTable *values;
+  gchar *name;
+  gchar *source_path;
+};
 
 static void shp_message_finalize (GObject * object);
 static void shp_message_get_property (GObject * object, guint propid,
@@ -54,24 +62,36 @@ shp_message_class_init (ShpMessageClass * klass)
 
   gobject_class = G_OBJECT_CLASS (klass);
 
+  g_type_class_add_private (klass, sizeof (ShpMessagePrivate));
+
   gobject_class->finalize = shp_message_finalize;
   gobject_class->set_property = shp_message_set_property;
   gobject_class->get_property = shp_message_get_property;
 
   g_object_class_install_property (gobject_class, PROP_NAME,
       g_param_spec_string ("name", "message name", "The name of the message",
-          DEFAULT_NAME, G_PARAM_READWRITE));
+          DEFAULT_NAME, G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
+  g_object_class_install_property (gobject_class, PROP_SOURCE_PATH,
+      g_param_spec_string ("source-path", "Spurce path",
+          "Path to the source of this message", DEFAULT_SOURCE_PATH,
+          G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 }
 
 static void
 shp_message_get_property (GObject * object, guint propid, GValue * value,
     GParamSpec * pspec)
 {
+  ShpMessagePrivate *priv;
   ShpMessage *message = SHP_MESSAGE (object);
+
+  priv = message->priv;
 
   switch (propid) {
     case PROP_NAME:
-      g_value_set_string (value, message->name);
+      g_value_set_string (value, priv->name);
+      break;
+    case PROP_SOURCE_PATH:
+      g_value_set_string (value, priv->source_path);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, propid, pspec);
@@ -82,12 +102,19 @@ static void
 shp_message_set_property (GObject * object, guint propid, const GValue * value,
     GParamSpec * pspec)
 {
+  ShpMessagePrivate *priv;
   ShpMessage *message = SHP_MESSAGE (object);
+
+  priv = message->priv;
 
   switch (propid) {
     case PROP_NAME:
-      g_free (message->name);
-      message->name = g_strdup (g_value_get_string (value));
+      g_free (priv->name);
+      priv->name = g_strdup (g_value_get_string (value));
+      break;
+    case PROP_SOURCE_PATH:
+      g_free (priv->source_path);
+      priv->source_path = g_strdup (g_value_get_string (value));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, propid, pspec);
@@ -105,17 +132,34 @@ free_value_cb (gpointer data)
 static void
 shp_message_init (ShpMessage * self)
 {
-  self->values = g_hash_table_new_full (g_str_hash, g_str_equal, g_free,
+  ShpMessagePrivate *priv;
+
+  self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self,
+                                            SHP_MESSAGE_TYPE,
+                                            ShpMessagePrivate);
+
+  priv = self->priv;
+
+  priv->values = g_hash_table_new_full (g_str_hash, g_str_equal, g_free,
       free_value_cb);
-  self->name = g_strdup (DEFAULT_NAME);
+  priv->name = g_strdup (DEFAULT_NAME);
+  priv->source_path = g_strdup (DEFAULT_SOURCE_PATH);
 }
 
 static void
 shp_message_finalize (GObject * object)
 {
+  ShpMessagePrivate *priv;
   ShpMessage *self = SHP_MESSAGE (object);
-  g_hash_table_unref (self->values);
-  g_free (self->name);
+
+  priv = self->priv;
+
+  g_hash_table_unref (priv->values);
+  priv->values = NULL;
+  g_free (priv->name);
+  priv->name = NULL;
+  g_free (priv->source_path);
+  priv->source_path = NULL;
 }
 
 /**
@@ -127,9 +171,10 @@ shp_message_finalize (GObject * object)
  * Returns: a new instance of #ShpMessage
  */
 ShpMessage*
-shp_message_new (const gchar * name)
+shp_message_new (const gchar * name, const gchar * source_path)
 {
-  return g_object_new (SHP_MESSAGE_TYPE, "name", name, NULL);
+  return g_object_new (SHP_MESSAGE_TYPE, "name", name, "source_path",
+      source_path, NULL);
 }
 
 /**
@@ -144,13 +189,17 @@ void
 shp_message_add_string (ShpMessage * msg, const gchar * name,
     const gchar * val)
 {
+  ShpMessagePrivate *priv;
+
   g_return_if_fail (IS_SHP_MESSAGE (msg));
   g_return_if_fail (name != NULL);
+
+  priv = msg->priv;
 
   _ShpValue *value = g_new0 (_ShpValue, 1);
   g_value_init (&value->value, G_TYPE_STRING);
   g_value_set_string (&value->value, val);
-  g_hash_table_insert (msg->values, g_strdup (name), value);
+  g_hash_table_insert (priv->values, g_strdup (name), value);
 }
 
 /**
@@ -164,13 +213,17 @@ shp_message_add_string (ShpMessage * msg, const gchar * name,
 void
 shp_message_add_integer (ShpMessage * msg, const gchar * name, gint val)
 {
+  ShpMessagePrivate *priv;
+
   g_return_if_fail (IS_SHP_MESSAGE (msg));
   g_return_if_fail (name != NULL);
+
+  priv = msg->priv;
 
   _ShpValue *value = g_new0 (_ShpValue, 1);
   g_value_init (&value->value, G_TYPE_INT);
   g_value_set_int (&value->value, val);
-  g_hash_table_insert (msg->values, g_strdup (name), value);
+  g_hash_table_insert (priv->values, g_strdup (name), value);
 }
 
 /**
@@ -184,13 +237,17 @@ shp_message_add_integer (ShpMessage * msg, const gchar * name, gint val)
 void
 shp_message_add_double (ShpMessage * msg, const gchar * name, gdouble val)
 {
+  ShpMessagePrivate *priv;
+
   g_return_if_fail (IS_SHP_MESSAGE (msg));
   g_return_if_fail (name != NULL);
+
+  priv = msg->priv;
 
   _ShpValue *value = g_new0 (_ShpValue, 1);
   g_value_init (&value->value, G_TYPE_DOUBLE);
   g_value_set_double (&value->value, val);
-  g_hash_table_insert (msg->values, g_strdup (name), value);
+  g_hash_table_insert (priv->values, g_strdup (name), value);
 }
 
 /**
@@ -204,13 +261,17 @@ shp_message_add_double (ShpMessage * msg, const gchar * name, gdouble val)
 void
 shp_message_add_boolean (ShpMessage * msg, const gchar * name, gboolean val)
 {
+  ShpMessagePrivate *priv;
+
   g_return_if_fail (IS_SHP_MESSAGE (msg));
   g_return_if_fail (name != NULL);
+
+  priv = msg->priv;
 
   _ShpValue *value = g_new0 (_ShpValue, 1);
   g_value_init (&value->value, G_TYPE_BOOLEAN);
   g_value_set_boolean (&value->value, val);
-  g_hash_table_insert (msg->values, g_strdup (name), value);
+  g_hash_table_insert (priv->values, g_strdup (name), value);
 }
 
 /**
@@ -224,13 +285,17 @@ shp_message_add_boolean (ShpMessage * msg, const gchar * name, gboolean val)
 void
 shp_message_add_long (ShpMessage * msg, const gchar * name, glong val)
 {
+  ShpMessagePrivate *priv;
+
   g_return_if_fail (IS_SHP_MESSAGE (msg));
   g_return_if_fail (name != NULL);
+
+  priv = msg->priv;
 
   _ShpValue *value = g_new0 (_ShpValue, 1);
   g_value_init (&value->value, G_TYPE_LONG);
   g_value_set_long (&value->value, val);
-  g_hash_table_insert (msg->values, g_strdup (name), value);
+  g_hash_table_insert (priv->values, g_strdup (name), value);
 }
 
 /**
@@ -248,13 +313,16 @@ shp_message_add_long (ShpMessage * msg, const gchar * name, glong val)
 gboolean
 shp_message_has_value (ShpMessage * msg, const gchar * name, GType type)
 {
+  ShpMessagePrivate *priv;
   _ShpValue *value;
 
   g_return_val_if_fail (IS_SHP_MESSAGE (msg), FALSE);
   g_return_val_if_fail (name != NULL, FALSE);
   g_return_val_if_fail (G_TYPE_IS_FUNDAMENTAL (type), FALSE);
 
-  value = g_hash_table_lookup (msg->values, name);
+  priv = msg->priv;
+
+  value = g_hash_table_lookup (priv->values, name);
   if (value == NULL)
     return FALSE;
 
@@ -276,13 +344,16 @@ shp_message_has_value (ShpMessage * msg, const gchar * name, GType type)
 const gchar*
 shp_message_get_string (ShpMessage * msg, const gchar * name)
 {
+  ShpMessagePrivate *priv;
   _ShpValue *value;
   const gchar *ret;
 
   g_return_val_if_fail (IS_SHP_MESSAGE (msg), NULL);
   g_return_val_if_fail (name != NULL, NULL);
 
-  value = g_hash_table_lookup (msg->values, name);
+  priv = msg->priv;
+
+  value = g_hash_table_lookup (priv->values, name);
   if (!value) {
     g_warning ("incomplete data, missing %s", name);
     return NULL;
@@ -308,13 +379,16 @@ shp_message_get_string (ShpMessage * msg, const gchar * name)
 gboolean
 shp_message_get_integer (ShpMessage * msg, const gchar * name, gint * result)
 {
+  ShpMessagePrivate *priv;
   _ShpValue *value;
 
   g_return_val_if_fail (IS_SHP_MESSAGE (msg), FALSE);
   g_return_val_if_fail (name != NULL, FALSE);
   g_return_val_if_fail (result != NULL, FALSE);
 
-  value = g_hash_table_lookup (msg->values, name);
+  priv = msg->priv;
+
+  value = g_hash_table_lookup (priv->values, name);
   if (!value) {
     g_warning ("incomplete data, missing %s", name);
     return FALSE;
@@ -340,13 +414,16 @@ shp_message_get_integer (ShpMessage * msg, const gchar * name, gint * result)
 gboolean
 shp_message_get_double (ShpMessage * msg, const gchar * name, gdouble * result)
 {
+  ShpMessagePrivate *priv;
   _ShpValue *value;
 
   g_return_val_if_fail (IS_SHP_MESSAGE (msg), FALSE);
   g_return_val_if_fail (name != NULL, FALSE);
   g_return_val_if_fail (result != NULL, FALSE);
 
-  value = g_hash_table_lookup (msg->values, name);
+  priv = msg->priv;
+
+  value = g_hash_table_lookup (priv->values, name);
   if (!value) {
     g_warning ("incomplete data, missing %s", name);
     return FALSE;
@@ -373,13 +450,16 @@ gboolean
 shp_message_get_boolean (ShpMessage * msg, const gchar * name,
     gboolean * result)
 {
+  ShpMessagePrivate *priv;
   _ShpValue *value;
 
   g_return_val_if_fail (IS_SHP_MESSAGE (msg), FALSE);
   g_return_val_if_fail (name != NULL, FALSE);
   g_return_val_if_fail (result != NULL, FALSE);
 
-  value = g_hash_table_lookup (msg->values, name);
+  priv = msg->priv;
+
+  value = g_hash_table_lookup (priv->values, name);
   if (!value) {
     g_warning ("incomplete data, missing %s", name);
     return FALSE;
@@ -405,13 +485,16 @@ shp_message_get_boolean (ShpMessage * msg, const gchar * name,
 gboolean
 shp_message_get_long (ShpMessage * msg, const gchar * name, glong * result)
 {
+  ShpMessagePrivate *priv;
   _ShpValue *value;
 
   g_return_val_if_fail (IS_SHP_MESSAGE (msg), FALSE);
   g_return_val_if_fail (name != NULL, FALSE);
   g_return_val_if_fail (result != NULL, FALSE);
 
-  value = g_hash_table_lookup (msg->values, name);
+  priv = msg->priv;
+
+  value = g_hash_table_lookup (priv->values, name);
   if (!value) {
     g_warning ("incomplete data, missing %s", name);
     return FALSE;
@@ -453,9 +536,13 @@ foreach_cb (gpointer key, gpointer val, gpointer data)
 guint
 shp_message_size (ShpMessage * msg)
 {
+  ShpMessagePrivate *priv;
+
   g_return_if_fail (IS_SHP_MESSAGE (msg));
 
-  return g_hash_table_size (msg->values);
+  priv = msg->priv;
+
+  return g_hash_table_size (priv->values);
 }
 
 /**
@@ -470,16 +557,19 @@ void
 shp_message_foreach (ShpMessage * msg, ShpMessageFunc func,
     gpointer user_data)
 {
+  ShpMessagePrivate *priv;
   _ShpFuncData *func_data;
 
   g_return_if_fail (IS_SHP_MESSAGE (msg));
   g_return_if_fail (func != NULL);
 
+  priv = msg->priv;
+
   func_data = g_new0 (_ShpFuncData, 1);
   func_data->func = func;
   func_data->user_data = user_data;
 
-  g_hash_table_foreach (msg->values, foreach_cb, func_data);
+  g_hash_table_foreach (priv->values, foreach_cb, func_data);
 
   g_free (func_data);
 }
@@ -487,12 +577,15 @@ shp_message_foreach (ShpMessage * msg, ShpMessageFunc func,
 GType
 shp_message_get_field_type (ShpMessage * msg, const gchar * name)
 {
+  ShpMessagePrivate *priv;
   _ShpValue *value;
 
   g_return_val_if_fail (IS_SHP_MESSAGE (msg), G_TYPE_INVALID);
   g_return_val_if_fail (name != NULL, G_TYPE_INVALID);
 
-  value = g_hash_table_lookup (msg->values, name);
+  priv = msg->priv;
+
+  value = g_hash_table_lookup (priv->values, name);
   if (!value) {
     g_warning ("incomplete data, missing %s", name);
     return G_TYPE_INVALID;
@@ -503,6 +596,21 @@ shp_message_get_field_type (ShpMessage * msg, const gchar * name)
 const char*
 shp_message_get_name (ShpMessage * msg)
 {
+  ShpMessagePrivate *priv;
   g_return_val_if_fail (IS_SHP_MESSAGE (msg), NULL);
-  return msg->name;
+
+  priv = msg->priv;
+
+  return priv->name;
+}
+
+const char*
+shp_message_get_source_path (ShpMessage * msg)
+{
+  ShpMessagePrivate *priv;
+  g_return_val_if_fail (IS_SHP_MESSAGE (msg), NULL);
+
+  priv = msg->priv;
+
+  return priv->source_path;
 }

@@ -28,6 +28,7 @@
 #include <glib-object.h>
 
 #include "shp-bus.h"
+#include "shp-message.h"
 
 G_BEGIN_DECLS
 
@@ -80,6 +81,10 @@ ShpBus* shp_component_get_bus (ShpComponent * component);
 ShpComponent* shp_component_get_parent (ShpComponent * component);
 void shp_component_set_parent (ShpComponent * component, ShpComponent * parent);
 const gchar* shp_component_get_name (ShpComponent * component);
+const gchar* shp_component_get_path (ShpComponent * component);
+gboolean shp_component_post_message (ShpComponent * component,
+    ShpMessage * message);
+ShpBus* shp_component_find_bus (ShpComponent * component);
 
 GType shp_component_get_type (void);
 

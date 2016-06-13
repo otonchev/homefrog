@@ -1,9 +1,10 @@
 .deps/
-shp-shp-message.o
+shp
+shp-main.o
 shp-shp-bus.o
+shp-shp-component.o
 shp-shp-group.o
+shp-shp-message.o
 shp-shp-plugin-factory.o
 shp-shp-plugin.o
-shp-main.o
-shp-shp-component.o
-shp
+shp-shp-slave-plugin.o

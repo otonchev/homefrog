@@ -27,12 +27,14 @@
 #include "shp-component.h"
 
 #define DEFAULT_NAME "<no_name>"
+#define DEFAULT_PATH "/empty path"
 
 enum
 {
   PROP_0,
   PROP_BUS,
   PROP_NAME,
+  PROP_PATH,
   PROP_LAST
 };
 
@@ -48,6 +50,7 @@ struct _ShpComponentPrivate {
   ShpBus *bus;
   gboolean started;
   gchar *name;
+  gchar *path;
 };
 
 static void shp_component_finalize (GObject * object);
@@ -71,6 +74,11 @@ shp_component_class_init (ShpComponentClass * klass)
           "The name of the component", DEFAULT_NAME,
           G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 
+  g_object_class_install_property (gobject_class, PROP_PATH,
+      g_param_spec_string ("path", "Component path",
+          "Path to the component", DEFAULT_PATH,
+          G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
+
   gobject_class->finalize = shp_component_finalize;
   gobject_class->set_property = shp_component_set_property;
   gobject_class->get_property = shp_component_get_property;
@@ -83,6 +91,7 @@ shp_component_init (ShpComponent * self)
                                             SHP_COMPONENT_TYPE,
                                             ShpComponentPrivate);
   self->priv->name = g_strdup (DEFAULT_NAME);
+  self->priv->path = g_strdup (DEFAULT_PATH);
 }
 
 static void
@@ -102,6 +111,8 @@ shp_component_finalize (GObject * object)
 
   g_free (priv->name);
   priv->name = NULL;
+  g_free (priv->path);
+  priv->path = NULL;
 }
 
 static void
@@ -116,6 +127,9 @@ shp_component_get_property (GObject * object, guint propid,
       break;
     case PROP_NAME:
       g_value_set_string (value, component->priv->name);
+      break;
+    case PROP_PATH:
+      g_value_set_string (value, component->priv->path);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, propid, pspec);
@@ -135,6 +149,10 @@ shp_component_set_property (GObject * object, guint propid,
     case PROP_NAME:
       g_free (component->priv->name);
       component->priv->name = g_strdup (g_value_get_string (value));
+      break;
+    case PROP_PATH:
+      g_free (component->priv->path);
+      component->priv->path = g_strdup (g_value_get_string (value));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, propid, pspec);
@@ -168,7 +186,15 @@ shp_component_stop (ShpComponent * component)
   if (klass->stop == NULL)
     return FALSE;
 
+  if (priv->bus && !shp_bus_start (priv->bus)) {
+    g_warning ("could not start bus");
+    return FALSE;
+  }
+
   res = klass->stop (component);
+  if (!res)
+    shp_bus_stop (priv->bus);
+
   priv->started = !(res == TRUE);
   return res;
 }
@@ -199,6 +225,9 @@ shp_component_start (ShpComponent * component)
 
   if (klass->start == NULL)
     return FALSE;
+
+  if (priv->bus)
+    shp_bus_stop (priv->bus);
 
   res = klass->start (component);
   priv->started = (res == TRUE);
@@ -276,4 +305,67 @@ shp_component_get_name (ShpComponent * component)
   priv = component->priv;
 
   return priv->name;
+}
+
+const gchar*
+shp_component_get_path (ShpComponent * component)
+{
+  ShpComponentPrivate *priv;
+
+  g_return_val_if_fail (IS_SHP_COMPONENT (component), NULL);
+
+  priv = component->priv;
+
+  return priv->path;
+}
+
+ShpBus*
+shp_component_find_bus (ShpComponent * component)
+{
+  ShpComponent *current_component = g_object_ref (component);
+  ShpBus *bus;
+
+  g_return_val_if_fail (IS_SHP_COMPONENT (component), NULL);
+
+  g_debug ("finding message bus");
+
+  while (!(bus = shp_component_get_bus (current_component))) {
+    ShpComponent *parent;
+
+    parent = shp_component_get_parent (current_component);
+    g_object_unref (current_component);
+    if (!parent) {
+      g_warning ("plugin has no parent, could not find bus");
+      return FALSE;
+    }
+
+    current_component = parent;
+  }
+
+  return bus;
+}
+
+gboolean
+shp_component_post_message (ShpComponent * component,
+    ShpMessage * message)
+{
+  ShpBus *bus;
+
+  g_return_val_if_fail (IS_SHP_COMPONENT (component), FALSE);
+  g_return_val_if_fail (IS_SHP_MESSAGE (message), FALSE);
+
+  g_debug ("component posting message");
+
+  bus = shp_component_find_bus (component);
+  if (!bus)
+    return FALSE;
+
+  if (!shp_bus_post (bus, message)) {
+    g_warning ("could not post message on bus");
+    g_object_unref (bus);
+    return FALSE;
+  }
+
+  g_object_unref (bus);
+  return TRUE;
 }

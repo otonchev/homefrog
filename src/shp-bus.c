@@ -34,6 +34,7 @@ struct _MessageHandler {
   ShpBusMessageHandler func;
   gpointer data;
   GDestroyNotify notify;
+  gchar *source_path;
 };
 
 struct _ShpBusPrivate {
@@ -88,6 +89,7 @@ message_handler_free (gpointer data)
 
   if (handler->data != NULL && handler->notify != NULL)
     handler->notify (handler->data);
+  g_free (handler->source_path);
   g_slice_free (MessageHandler, handler);
 }
 
@@ -147,11 +149,23 @@ thread_func (gpointer data)
 
     g_mutex_lock (&priv->mutex);
     handlers = priv->message_handlers;
+
     while (handlers != NULL) {
+      gboolean call_func = TRUE;
       MessageHandler *handler = (MessageHandler *)(handlers->data);
-      handler->func (bus, msg, handler->data);
+
+      /* check if source_path matches if present */
+      if (handler->source_path) {
+        const gchar *source_path = shp_message_get_source_path (msg);
+        if (g_strcmp0 (handler->source_path, source_path))
+          call_func = FALSE;
+      }
+
+      if (call_func)
+        handler->func (bus, msg, handler->data);
       handlers = g_slist_next (handlers);
     }
+
     g_mutex_unlock (&priv->mutex);
     g_object_unref (msg);
   }
@@ -217,6 +231,12 @@ shp_bus_post (ShpBus *bus, ShpMessage *message)
 
   priv = bus->priv;
 
+  if (priv->thread == NULL) {
+    g_warning ("bus not started yet, ignoring message");
+    g_object_unref (message);
+    return FALSE;
+  }
+
   if (priv->func != NULL) {
     priv->func (bus, message, priv->data);
   }
@@ -250,7 +270,7 @@ shp_bus_set_sync_handler (ShpBus *bus, ShpBusMessageHandler func,
 
 void
 shp_bus_add_async_handler (ShpBus *bus, ShpBusMessageHandler func,
-    gpointer user_data, GDestroyNotify notify)
+    gpointer user_data, GDestroyNotify notify, const gchar * source_path)
 {
   ShpBusPrivate *priv;
   MessageHandler *handler;
@@ -263,6 +283,7 @@ shp_bus_add_async_handler (ShpBus *bus, ShpBusMessageHandler func,
   handler->func = func;
   handler->data = user_data;
   handler->notify = notify;
+  handler->source_path = g_strdup (source_path);
 
   g_mutex_lock (&priv->mutex);
   priv->message_handlers = g_slist_append (priv->message_handlers, handler);
