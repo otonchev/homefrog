@@ -75,11 +75,14 @@ struct _ShpPluginClass {
   /*< private >*/
 
   /* signal callbacks */
+  void (*status_update) (ShpPlugin * plugin);
 
   /*< protected >*/
 
   /* virtual methods for subclasses */
 };
+
+void shp_plugin_status_update (ShpPlugin * plugin);
 
 GType shp_plugin_get_type (void);
 

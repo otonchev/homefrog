@@ -39,6 +39,8 @@ enum
   PROP_LAST
 };
 
+static void status_update (ShpPlugin * plugin);
+
 static void shp_base1wire_finalize (GObject * object);
 
 static void shp_base1wire_get_property (GObject * object, guint propid,
@@ -113,6 +115,9 @@ static void
 shp_base1wire_init (ShpBase1wire * self)
 {
   self->device_id = g_strdup (DEFAULT_DEVICE_ID);
+
+  g_signal_connect (G_OBJECT (self), "status-update",
+      G_CALLBACK (status_update), NULL);
 }
 
 static void
@@ -127,39 +132,58 @@ static gfloat
 read_sensor_data (ShpBase1wire * self, const gchar * id)
 {
   if (SHP_BASE1WIRE_GET_CLASS (self)->read_sensor_data == NULL) {
-    g_warning ("no read_sensor_data implemented");
+    g_warning ("base1wire: no read_sensor_data implemented");
     return SHP_BASE1WIRE_INVALID_READING;
   }
   return SHP_BASE1WIRE_GET_CLASS (self)->read_sensor_data (self, id);
 }
 
 static gboolean
-dispatch_cb (gpointer user_data)
+send_status (ShpBase1wire * self)
 {
-  ShpComponent *component = SHP_COMPONENT (user_data);
-  ShpBase1wire *self = SHP_BASE1WIRE (component);
+  ShpComponent *component = SHP_COMPONENT (self);
   ShpMessage *msg;
   gfloat reading;
 
   g_debug ("base1wire: reading sensor data");
 
   if (self->device_id == NULL) {
-    g_warning ("incomplete configuration, missing 'device-id'");
-    return TRUE;
+    g_warning ("base1wire: incomplete configuration, missing 'device-id'");
+    return FALSE;
   }
 
   reading = read_sensor_data (self, self->device_id);
   if (reading == SHP_BASE1WIRE_INVALID_READING) {
-    g_warning ("invalid temperature reading");
-    return TRUE;
+    g_warning ("base1wire: invalid temperature reading");
+    return FALSE;
   }
+
+  g_debug ("base1wire: sending status update: %f", reading);
 
   msg = shp_message_new (shp_component_get_name (component),
       shp_component_get_path (component));
   shp_message_add_double (msg, "reading", reading);
 
-  if (!shp_component_post_message (component, msg))
-    g_warning ("could not post message on bus");
+  if (!shp_component_post_message (component, msg)) {
+    g_warning ("base1wire: could not post message on bus");
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+static void
+status_update (ShpPlugin * plugin)
+{
+  if (!send_status (SHP_BASE1WIRE (plugin)))
+    g_warning ("base1wire: unable to send status update");
+}
+
+static gboolean
+dispatch_cb (gpointer user_data)
+{
+  if (!send_status (SHP_BASE1WIRE (user_data)))
+    g_warning ("base1wire: unable to send status update");
 
   return TRUE;
 }
@@ -170,7 +194,7 @@ shp_base1wire_start (ShpComponent * component)
   ShpBase1wire *self = SHP_BASE1WIRE (component);
 
   if (self->device_id == NULL) {
-    g_warning ("no 'device-id' provided");
+    g_warning ("base1wire: no 'device-id' provided");
     return FALSE;
   }
 

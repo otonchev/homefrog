@@ -42,6 +42,7 @@ enum
   PROP_LAST
 };
 
+static void status_update (ShpPlugin * plugin);
 
 static gboolean change_status (ShpTelldus * self, gboolean on);
 static gint get_status (ShpTelldus * self);
@@ -77,6 +78,8 @@ shp_telldus_class_init (ShpTelldusClass * klass)
 static void
 shp_telldus_init (ShpTelldus * self)
 {
+  g_signal_connect (G_OBJECT (self), "status-update",
+      G_CALLBACK (status_update), NULL);
 }
 
 static void
@@ -115,12 +118,28 @@ signal_new_status (ShpTelldus * self, gboolean on)
   ShpMessage *msg;
   ShpComponent *component = SHP_COMPONENT (self);
 
+  g_debug ("telldus: signalling new status: %d", on);
+
   msg = shp_message_new (shp_component_get_name (component),
       shp_component_get_path (component));
   shp_message_add_string (msg, "status", (on) ? "on" : "off");
 
   if (!shp_component_post_message (component, msg))
     g_warning ("could not post message on bus");
+}
+
+static void
+status_update (ShpPlugin * plugin)
+{
+  gint status;
+
+  status = get_status (SHP_TELLDUS (plugin));
+  if (status == -1) {
+    g_warning ("telldus: unable to get device status");
+    return;
+  }
+
+  signal_new_status (SHP_TELLDUS (plugin), (status == 1));
 }
 
 static gboolean

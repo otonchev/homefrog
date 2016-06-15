@@ -26,6 +26,7 @@
 #include <glib.h>
 
 #include "shp-group.h"
+#include "shp-plugin.h"
 
 G_DEFINE_TYPE (ShpGroup, shp_group, G_TYPE_OBJECT);
 
@@ -124,7 +125,7 @@ shp_group_start (ShpComponent * component)
 
   g_debug ("starting group");
 
-  /* start all plugins first */
+  /* start all sub-components first */
   g_mutex_lock (&priv->mutex);
   components = priv->components;
   while (components != NULL) {
@@ -133,6 +134,16 @@ shp_group_start (ShpComponent * component)
       g_warning ("unable to start component");
       result = FALSE;
       break;
+    }
+    components = g_slist_next (components);
+  }
+
+  /* send status updates from all contained plugins */
+  components = priv->components;
+  while (components != NULL) {
+    ShpComponent *component = SHP_COMPONENT (components->data);
+    if (IS_SHP_PLUGIN (component)) {
+      shp_plugin_status_update (SHP_PLUGIN (component));
     }
     components = g_slist_next (components);
   }

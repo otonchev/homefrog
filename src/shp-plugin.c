@@ -38,6 +38,14 @@ enum
   PROP_LAST
 };
 
+enum
+{
+  SIGNAL_STATUS_UPDATE,
+  SIGNAL_LAST
+};
+
+static guint shp_plugin_signals[SIGNAL_LAST] = { 0 };
+
 static void shp_plugin_finalize (GObject * object);
 static void shp_plugin_get_property (GObject * object, guint propid,
     GValue * value, GParamSpec * pspec);
@@ -56,6 +64,12 @@ shp_plugin_class_init (ShpPluginClass * klass)
   gobject_class->finalize = shp_plugin_finalize;
   gobject_class->set_property = shp_plugin_set_property;
   gobject_class->get_property = shp_plugin_get_property;
+
+  shp_plugin_signals[SIGNAL_STATUS_UPDATE] =
+      g_signal_new ("status-update", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST,
+      G_STRUCT_OFFSET (ShpPluginClass, status_update), NULL, NULL,
+      g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 1, G_TYPE_NONE);
 }
 
 static void
@@ -93,4 +107,12 @@ shp_plugin_set_property (GObject * object, guint propid, const GValue * value,
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, propid, pspec);
   }
+}
+
+void
+shp_plugin_status_update (ShpPlugin * plugin)
+{
+  g_return_if_fail (IS_SHP_PLUGIN (plugin));
+
+  g_signal_emit (plugin, shp_plugin_signals[SIGNAL_STATUS_UPDATE], 0, NULL);
 }
