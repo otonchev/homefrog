@@ -26,7 +26,7 @@
 ShpPlugin * shp_plugin_factory_create (gchar * name);
 gboolean shp_plugin_factory_register (gchar * name, GType object_type);
 gchar** shp_plugin_factory_get_plugin_list ();
-gboolean shp_plugin_factory_setup ();
+gboolean shp_plugin_factory_setup (const gchar * plugin_dir);
 void shp_plugin_factory_cleanup ();
 
 #endif /* __SHP_PLUGIN_FACTORY_H__ */

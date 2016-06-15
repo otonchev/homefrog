@@ -45,7 +45,7 @@ struct _ShpTelldus {
 };
 
 struct _ShpTelldusClass {
-  ShpPluginClass parent_class;
+  ShpSlavePluginClass parent_class;
 
   /*< private >*/
 };
