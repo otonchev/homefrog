@@ -19,25 +19,6 @@
 /*
  * This plugin is used for or emitting radio frequency signals and thus
  * turning on/off wall-plug sockets.
- *
- * It implements also the Radio interface for controlling radio device
- * in an unified manner.
- *
- * In order for the plugin to work devices should be properly configured
- * in the telldus configuration file.
- *
- * Configure specification:
- *
- * Properties inherited from baseplugin:
- *
- * interval=<integer>
- *
- * Properties for this plugin:
- *
- * device-id=<integer>
- * set-on=<boolean>
- *
- * Where device-id is a device id from the Telldus configuration file.
  */
 
 #include <stdio.h>
@@ -45,42 +26,35 @@
 #include <glib.h>
 #include <telldus-core.h>
 
-#include "../shp-data.h"
+#include "../shp-message.h"
 #include "../shp-plugin-factory.h"
-#include "../shp-radio.h"
 #include "shp-telldus.h"
 
 #define NAME "telldus"
 #define UNKNOWN_DEVICE_ID -1
 
-#define DEFAULT_SET_ON TRUE
 #define DEFAULT_DEVICE_ID UNKNOWN_DEVICE_ID
 
 enum
 {
   PROP_0,
   PROP_DEVICE_ID,
-  PROP_SET_ON,
   PROP_LAST
 };
 
 
-static void shp_telldus_interface_init (ShpRadioInterface * iface);
-static gboolean turn_on (ShpRadio * radio, guint id);
-static gboolean turn_off (ShpRadio * radio, guint id);
-static RadioStatus get_status (ShpRadio * radio, guint id);
+static gboolean change_status (ShpTelldus * self, gboolean on);
+static gint get_status (ShpTelldus * self);
 
-static void shp_data_received (ShpPlugin * plugin, ShpPad * pad,
-    ShpData * data);
+static void message_received (ShpSlavePlugin * plugin, ShpBus * bus,
+      ShpMessage * message);
 
 static void shp_telldus_get_property (GObject * object, guint propid,
     GValue * value, GParamSpec * pspec);
 static void shp_telldus_set_property (GObject * object, guint propid,
     const GValue * value, GParamSpec * pspec);
 
-G_DEFINE_TYPE_WITH_CODE (ShpTelldus, shp_telldus, SHP_PLUGIN_TYPE,
-    G_IMPLEMENT_INTERFACE (SHP_TYPE_RADIO,
-        shp_telldus_interface_init));
+G_DEFINE_TYPE (ShpTelldus, shp_telldus, SHP_SLAVE_PLUGIN_TYPE);
 
 static void
 shp_telldus_class_init (ShpTelldusClass * klass)
@@ -92,29 +66,17 @@ shp_telldus_class_init (ShpTelldusClass * klass)
   gobject_class->set_property = shp_telldus_set_property;
   gobject_class->get_property = shp_telldus_get_property;
 
-  SHP_PLUGIN_CLASS (klass)->data_received = shp_data_received;
-
-  g_object_class_install_property (gobject_class, PROP_SET_ON,
-      g_param_spec_boolean ("set-on", "Turn device on",
-          "Whether toturn a device on", DEFAULT_SET_ON, G_PARAM_READWRITE));
+  SHP_SLAVE_PLUGIN_CLASS (klass)->message_received = message_received;
 
   g_object_class_install_property (gobject_class, PROP_DEVICE_ID,
       g_param_spec_int ("device-id", "Device id",
-          "Device id to turn on/off (from the telldus configuration file)",
+          "Device id to control (from the telldus configuration file)",
           -1, G_MAXINT, DEFAULT_DEVICE_ID, G_PARAM_READWRITE));
 }
 
 static void
 shp_telldus_init (ShpTelldus * self)
 {
-}
-
-static void
-shp_telldus_interface_init (ShpRadioInterface * iface)
-{
-  iface->turn_on = turn_on;
-  iface->turn_off = turn_off;
-  iface->get_status = get_status;
 }
 
 static void
@@ -126,9 +88,6 @@ shp_telldus_get_property (GObject * object, guint propid, GValue * value,
   switch (propid) {
     case PROP_DEVICE_ID:
       g_value_set_int (value, self->device_id);
-      break;
-    case PROP_SET_ON:
-      g_value_set_boolean (value, self->set_on);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, propid, pspec);
@@ -145,45 +104,38 @@ shp_telldus_set_property (GObject * object, guint propid,
     case PROP_DEVICE_ID:
       self->device_id = g_value_get_int (value);
       break;
-    case PROP_SET_ON:
-      self->set_on = g_value_get_boolean (value);
-      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, propid, pspec);
   }
 }
 
-static gboolean
-turn_on (ShpRadio * radio, guint id)
+static void
+signal_new_status (ShpTelldus * self, gboolean on)
 {
-  gint retval;
+  ShpMessage *msg;
+  ShpComponent *component = SHP_COMPONENT (self);
 
-  g_return_val_if_fail (IS_SHP_TELLDUS (radio), FALSE);
+  msg = shp_message_new (shp_component_get_name (component),
+      shp_component_get_path (component));
+  shp_message_add_string (msg, "status", (on) ? "on" : "off");
 
-  g_debug ("telldus: turning on %d", id);
-
-  retval = tdTurnOn (id);
-
-  if (retval != TELLSTICK_SUCCESS ) {
-    gchar *errorString = tdGetErrorString (retval);
-    g_critical ("%s: error: %s", errorString, NAME);
-    tdReleaseString (errorString);
-    return FALSE;
-  }
-
-  return TRUE;
+  if (!shp_component_post_message (component, msg))
+    g_warning ("could not post message on bus");
 }
 
 static gboolean
-turn_off (ShpRadio * radio, guint id)
+change_status (ShpTelldus * self, gboolean on)
 {
   gint retval;
 
-  g_return_val_if_fail (IS_SHP_TELLDUS (radio), FALSE);
+  g_return_val_if_fail (IS_SHP_TELLDUS (self), FALSE);
 
-  g_debug ("telldus: turning off %d", id);
+  g_debug ("telldus: turning %s %d", (on) ? "on" : "off", self->device_id);
 
-  retval = tdTurnOff (id);
+  if (on)
+    retval = tdTurnOn (self->device_id);
+  else
+    retval = tdTurnOff (self->device_id);
 
   if (retval != TELLSTICK_SUCCESS ) {
     gchar *errorString = tdGetErrorString (retval);
@@ -192,56 +144,59 @@ turn_off (ShpRadio * radio, guint id)
     return FALSE;
   }
 
+  signal_new_status (self, on);
+
   return TRUE;
 }
 
-static RadioStatus
-get_status (ShpRadio * radio, guint id)
+static gint
+get_status (ShpTelldus * self)
 {
   int state;
 
-  g_return_val_if_fail (IS_SHP_TELLDUS (radio), RADIO_UNKNOWN);
+  g_return_val_if_fail (IS_SHP_TELLDUS (self), -1);
 
-  state = tdLastSentCommand (id, TELLSTICK_TURNON | TELLSTICK_TURNOFF);
+  state = tdLastSentCommand (self->device_id,
+      TELLSTICK_TURNON | TELLSTICK_TURNOFF);
   if (state == TELLSTICK_TURNON) {
-    g_debug ("%d last command On", id);
-    return RADIO_ON;
+    g_debug ("%d last command On", self->device_id);
+    return 1;
   } else if (state == TELLSTICK_TURNOFF) {
-    g_debug ("%d last command Off", id);
-    return RADIO_OFF;
+    g_debug ("%d last command Off", self->device_id);
+    return 0;
   }
 
-  g_debug ("%d last command Unknown", id);
-  return RADIO_UNKNOWN;
+  g_debug ("%d last command Unknown", self->device_id);
+  return -1;
 }
 
 static void
-shp_data_received (ShpPlugin * plugin, ShpPad * pad, ShpData * data)
+message_received (ShpSlavePlugin * plugin, ShpBus * bus,
+      ShpMessage * message)
 {
-  gint id;
   gboolean set_on;
+  const gchar *status;
   ShpTelldus *self = SHP_TELLDUS (plugin);
-
-  /* chain up to parent first */
-  if (!shp_plugin_check (plugin)) {
-    return;
-  }
 
   if (self->device_id == UNKNOWN_DEVICE_ID) {
     g_warning ("incomplete configuration, missing 'device-id'");
     return;
   }
-  id = self->device_id;
-  set_on = self->set_on;
 
-  if (set_on && get_status (SHP_RADIO (plugin), id) != RADIO_ON)
-    turn_on (SHP_RADIO (plugin), id);
-  else if (get_status (SHP_RADIO (plugin), id) != RADIO_OFF)
-    turn_off (SHP_RADIO (plugin), id);
+  status = shp_message_get_string (message, "status");
+  set_on = !g_strcmp0 (status, "on");
+
+  if (set_on && get_status (SHP_TELLDUS (plugin)) != 1)
+    change_status (SHP_TELLDUS (plugin), TRUE);
+  else if (get_status (SHP_TELLDUS (plugin)) != 0)
+    change_status (SHP_TELLDUS (plugin), FALSE);
 }
 
-void
-shp_plugin_register (void)
+static void
+plugin_register (void)
 {
+  g_debug ("%s: loading plugin", NAME);
   shp_plugin_factory_register (NAME, SHP_TELLDUS_TYPE);
 }
+
+SHP_PLUGIN_REGISTER (plugin_register);

@@ -1,20 +1,20 @@
 lib_LTLIBRARIES = \
-	libds1820digitemp.la
-#	libtelldus.la \
+	libds1820digitemp.la \
+	libtelldus.la
 #	libmysql.la \
 #	libdayschedule.la \
 #	libraspberrygpio.la \
 #	libgrovedust.la \
 #	libdummy.la
 #
-#libtelldus_la_SOURCES = \
-#	shp-telldus.c
-#libtelldus_la_CFLAGS = \
-#        $(GLIB_CFLAGS) \
-#        $(GOBJECT_CFLAGS) \
-#        -Werror -Wunused -Wall
-#libtelldus_la_LIBADD=-ltelldus-core
-#libtelldus_la_LDFLAGS=-module -avoid-version -shared
+libtelldus_la_SOURCES = \
+	shp-telldus.c
+libtelldus_la_CFLAGS = \
+        $(GLIB_CFLAGS) \
+        $(GOBJECT_CFLAGS) \
+        -Werror -Wunused -Wall
+libtelldus_la_LIBADD=-ltelldus-core
+libtelldus_la_LDFLAGS=-module -avoid-version -shared
 #
 #libmysql_la_SOURCES = \
 #        shp-mysql.c
@@ -54,7 +54,7 @@ libds1820digitemp_la_CFLAGS = \
         -Werror -Wunused -Wall
 libds1820digitemp_la_LIBADD=
 libds1820digitemp_la_LDFLAGS=-module -avoid-version -shared
-#
+
 #libgrovedust_la_SOURCES = \
 #	air_utils.c \
 #	lngpio.c \

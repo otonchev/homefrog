@@ -21,7 +21,7 @@
 #include <glib.h>
 #include <glib-object.h>
 
-#include "../shp-plugin.h"
+#include "../shp-slave-plugin.h"
 
 G_BEGIN_DECLS
 
@@ -36,13 +36,12 @@ typedef struct _ShpTelldus ShpTelldus;
 typedef struct _ShpTelldusClass ShpTelldusClass;
 
 struct _ShpTelldus {
-  ShpPlugin parent;
+  ShpSlavePlugin parent;
 
   /*< protected >*/
 
   /*< private >*/
   gint device_id;
-  gboolean set_on;
 };
 
 struct _ShpTelldusClass {
