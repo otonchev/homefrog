@@ -17,7 +17,8 @@
  */
 
 /*
- * ShpRule groups events so that thay can be activated simultaneously.
+ * ShpRule is a set of conditions and a scene to be activated when all
+ * conditions are met.
  */
 
 #include <stdio.h>
@@ -195,7 +196,7 @@ shp_rule_process_event (ShpRule * rule, ShpMessage * event)
 
   condition = SHP_CONDITION (g_hash_table_lookup (priv->conditions, path));
   if (!condition) {
-    g_warning ("rule: invalid path %s", path);
+    g_debug ("rule: path is of no interest %s", path);
     return FALSE;
   }
 

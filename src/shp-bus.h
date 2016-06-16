@@ -40,8 +40,9 @@ G_BEGIN_DECLS
 typedef struct _ShpBus ShpBus;
 typedef struct _ShpBusPrivate ShpBusPrivate;
 typedef struct _ShpBusClass ShpBusClass;
+typedef struct _ShpMessageHandler ShpMessageHandler;
 
-typedef void (*ShpBusMessageHandler) (ShpBus * bus, ShpMessage * message,
+typedef void (*ShpMessageHandlerFunc) (ShpBus * bus, ShpMessage * message,
     gpointer user_data);
 
 struct _ShpBus {
@@ -61,10 +62,12 @@ struct _ShpBusClass {
 
 ShpBus* shp_bus_new ();
 gboolean shp_bus_post (ShpBus *bus, ShpMessage *message);
-void shp_bus_set_sync_handler (ShpBus *bus, ShpBusMessageHandler func,
+void shp_bus_set_sync_handler (ShpBus *bus, ShpMessageHandlerFunc func,
     gpointer user_data, GDestroyNotify notify);
-void shp_bus_add_async_handler (ShpBus *bus, ShpBusMessageHandler func,
-    gpointer user_data, GDestroyNotify notify, const gchar * source_path);
+ShpMessageHandler* shp_bus_add_async_handler (ShpBus *bus,
+    ShpMessageHandlerFunc func, gpointer user_data, GDestroyNotify notify,
+    const gchar * source_path);
+void shp_bus_remove_async_handler (ShpBus * bus, ShpMessageHandler * handler);
 gboolean shp_bus_start (ShpBus *bus);
 gboolean shp_bus_stop (ShpBus *bus);
 
