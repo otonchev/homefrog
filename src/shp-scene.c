@@ -46,10 +46,6 @@ static void shp_scene_get_property (GObject * object, guint propid,
 static void shp_scene_set_property (GObject * object, guint propid,
     const GValue * value, GParamSpec * pspec);
 
-typedef struct {
-  GValue value;
-} _ShpValue;
-
 static void
 shp_scene_class_init (ShpSceneClass * klass)
 {

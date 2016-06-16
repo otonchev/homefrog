@@ -16,6 +16,7 @@ shp_SOURCES = \
 	main.c \
 	shp-bus.c \
 	shp-component.c \
+	shp-condition.c \
 	shp-group.c \
 	shp-message.c \
 	shp-plugin.c \

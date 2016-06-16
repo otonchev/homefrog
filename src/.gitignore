@@ -3,6 +3,7 @@ shp
 shp-main.o
 shp-shp-bus.o
 shp-shp-component.o
+shp-shp-condition.o
 shp-shp-group.o
 shp-shp-message.o
 shp-shp-plugin-factory.o
