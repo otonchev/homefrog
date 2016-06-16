@@ -69,7 +69,7 @@ shp_component_class_init (ShpComponentClass * klass)
           "Event Bus used by components for exchanging messages",
           SHP_BUS_TYPE, G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 
-  g_object_class_install_property (gobject_class, PROP_BUS,
+  g_object_class_install_property (gobject_class, PROP_NAME,
       g_param_spec_string ("name", "Component name",
           "The name of the component", DEFAULT_NAME,
           G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
@@ -101,8 +101,10 @@ shp_component_finalize (GObject * object)
 
   priv = SHP_COMPONENT (object)->priv;
 
-  g_object_unref (priv->bus);
-  priv->bus = NULL;
+  if (priv->bus) {
+    g_object_unref (priv->bus);
+    priv->bus = NULL;
+  }
 
   if (priv->parent != NULL) {
     g_object_unref (priv->parent);
@@ -144,6 +146,8 @@ shp_component_set_property (GObject * object, guint propid,
 
   switch (propid) {
     case PROP_BUS:
+      if (component->priv->bus)
+        g_object_unref (component->priv->bus);
       component->priv->bus = g_value_get_object (value);
       break;
     case PROP_NAME:
