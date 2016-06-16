@@ -8,5 +8,6 @@ shp-shp-group.o
 shp-shp-message.o
 shp-shp-plugin-factory.o
 shp-shp-plugin.o
+shp-shp-rule.o
 shp-shp-scene.o
 shp-shp-slave-plugin.o

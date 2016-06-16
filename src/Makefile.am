@@ -21,6 +21,7 @@ shp_SOURCES = \
 	shp-message.c \
 	shp-plugin.c \
 	shp-plugin-factory.c \
+	shp-rule.c \
 	shp-scene.c \
 	shp-slave-plugin.c
 

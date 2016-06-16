@@ -69,8 +69,7 @@ void shp_condition_add_double_option (ShpCondition * condition,
     const gchar * value_name, gdouble value, ShpConditionOperator op);
 void shp_condition_add_integer_option (ShpCondition * condition,
     const gchar * value_name, gint value, ShpConditionOperator op);
-gboolean shp_condition_is_satisfied (ShpCondition * condition,
-    const ShpMessage * event);
+gboolean shp_condition_is_satisfied (ShpCondition * condition);
 gboolean shp_condition_process_event (ShpCondition * condition,
     const ShpMessage * event);
 

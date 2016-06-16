@@ -206,8 +206,7 @@ shp_condition_add_integer_option (ShpCondition * condition,
 }
 
 gboolean
-shp_condition_is_satisfied (ShpCondition * condition,
-    const ShpMessage * event)
+check_event (ShpCondition * condition, const ShpMessage * event)
 {
   ShpConditionPrivate *priv;
   GSList *options;
@@ -313,7 +312,19 @@ shp_condition_process_event (ShpCondition * condition,
 
   priv = condition->priv;
 
-  priv->satisfied = shp_condition_is_satisfied (condition, event);
+  priv->satisfied = check_event (condition, event);
+
+  return priv->satisfied;
+}
+
+gboolean
+shp_condition_is_satisfied (ShpCondition * condition)
+{
+  ShpConditionPrivate *priv;
+
+  g_return_val_if_fail (IS_SHP_CONDITION (condition), FALSE);
+
+  priv = condition->priv;
 
   return priv->satisfied;
 }
