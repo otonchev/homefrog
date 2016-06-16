@@ -26,10 +26,12 @@
 #include <glib.h>
 
 #include "shp-slave-plugin.h"
+#include "shp-bus.h"
 
 G_DEFINE_TYPE (ShpSlavePlugin, shp_slave_plugin, SHP_PLUGIN_TYPE);
 
 struct _ShpSlavePluginPrivate {
+  ShpBusMessageHandler *handler;
 };
 
 enum
@@ -38,7 +40,9 @@ enum
   PROP_LAST
 };
 
-static void shp_slave_plugin_constructed (GObject * object);
+static gboolean shp_slave_plugin_start (ShpComponent * component);
+static gboolean shp_slave_plugin_stop (ShpComponent * component);
+
 static void shp_slave_plugin_finalize (GObject * object);
 static void shp_slave_plugin_get_property (GObject * object, guint propid,
     GValue * value, GParamSpec * pspec);
@@ -49,15 +53,19 @@ static void
 shp_slave_plugin_class_init (ShpSlavePluginClass * klass)
 {
   GObjectClass *gobject_class;
+  ShpComponentClass *component_class;
 
   gobject_class = G_OBJECT_CLASS (klass);
 
   g_type_class_add_private (klass, sizeof (ShpSlavePluginPrivate));
 
-  gobject_class->constructed = shp_slave_plugin_constructed;
   gobject_class->finalize = shp_slave_plugin_finalize;
   gobject_class->set_property = shp_slave_plugin_set_property;
   gobject_class->get_property = shp_slave_plugin_get_property;
+
+  component_class = SHP_COMPONENT_CLASS (klass);
+  component_class->start = shp_slave_plugin_start;
+  component_class->stop = shp_slave_plugin_stop;
 }
 
 static void
@@ -81,25 +89,63 @@ message_received (ShpBus * bus, ShpMessage * message, gpointer user_data)
 }
 
 static void
-shp_slave_plugin_constructed (GObject * object)
-{
-  ShpSlavePlugin *plugin = SHP_SLAVE_PLUGIN (object);
-  ShpBus *bus;
-
-  bus = shp_component_find_bus (SHP_COMPONENT (plugin));
-  if (!bus) {
-    g_warning ("could not find bus, no parent with bus installed?");
-    return;
-  }
-
-  shp_bus_add_async_handler (bus, message_received, g_object_ref (plugin),
-      g_object_unref, shp_component_get_path (SHP_COMPONENT (plugin)));
-  g_object_unref (bus);
-}
-
-static void
 shp_slave_plugin_finalize (GObject * object)
 {
+}
+
+static gboolean
+shp_slave_plugin_start (ShpComponent * component)
+{
+  ShpSlavePlugin *plugin = SHP_SLAVE_PLUGIN (component);
+  ShpSlavePluginPrivate *priv;
+  ShpBus *bus;
+
+  g_return_val_if_fail (IS_SHP_SLAVE_PLUGIN (plugin), FALSE);
+
+  priv = plugin->priv;
+
+  g_debug ("starting slaveplugin");
+
+  bus = shp_component_find_bus (component);
+  if (!bus) {
+    g_warning ("slaveplugin: unable to find bus");
+    return FALSE;
+  }
+
+  priv->handler = shp_bus_add_async_handler (bus, message_received,
+      g_object_ref (plugin), g_object_unref,
+      shp_component_get_path (component));
+  g_object_unref (bus);
+
+  return TRUE;
+}
+
+static gboolean
+shp_slave_plugin_stop (ShpComponent * component)
+{
+  ShpSlavePlugin *plugin = SHP_SLAVE_PLUGIN (component);
+  ShpSlavePluginPrivate *priv;
+  ShpBus *bus;
+
+  g_return_if_fail (IS_SHP_SLAVE_PLUGIN (plugin));
+
+  priv = plugin->priv;
+
+  g_debug ("stopping slaveplugin");
+
+  bus = shp_component_find_bus (component);
+  if (!bus) {
+    g_warning ("slaveplugin: unable to find bus");
+    return FALSE;
+  }
+
+  if (priv->handler) {
+    shp_bus_remove_async_handler (bus, priv->handler);
+    priv->handler = NULL;
+  }
+  g_object_unref (bus);
+
+  return TRUE;
 }
 
 static void

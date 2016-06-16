@@ -28,15 +28,15 @@
 
 G_DEFINE_TYPE (ShpBus, shp_bus, G_TYPE_OBJECT);
 
-struct _ShpMessageHandler {
-  ShpMessageHandlerFunc func;
+struct _ShpBusMessageHandler {
+  ShpBusMessageHandlerFunc func;
   gpointer data;
   GDestroyNotify notify;
   gchar *source_path;
 };
 
 struct _ShpBusPrivate {
-  ShpMessageHandlerFunc func;
+  ShpBusMessageHandlerFunc func;
   gpointer data;
   GDestroyNotify notify;
   GCond message_cond;
@@ -83,12 +83,12 @@ shp_bus_init (ShpBus * self)
 static void
 message_handler_free (gpointer data)
 {
-  ShpMessageHandler *handler = (ShpMessageHandler *)data;
+  ShpBusMessageHandler *handler = (ShpBusMessageHandler *)data;
 
   if (handler->data != NULL && handler->notify != NULL)
     handler->notify (handler->data);
   g_free (handler->source_path);
-  g_slice_free (ShpMessageHandler, handler);
+  g_slice_free (ShpBusMessageHandler, handler);
 }
 
 static void
@@ -150,7 +150,7 @@ thread_func (gpointer data)
 
     while (handlers != NULL) {
       gboolean call_func = TRUE;
-      ShpMessageHandler *handler = (ShpMessageHandler *)(handlers->data);
+      ShpBusMessageHandler *handler = (ShpBusMessageHandler *)(handlers->data);
 
       /* check if source_path matches if present */
       if (handler->source_path) {
@@ -248,7 +248,7 @@ shp_bus_post (ShpBus *bus, ShpMessage *message)
 }
 
 void
-shp_bus_set_sync_handler (ShpBus *bus, ShpMessageHandlerFunc func,
+shp_bus_set_sync_handler (ShpBus *bus, ShpBusMessageHandlerFunc func,
     gpointer user_data, GDestroyNotify notify)
 {
   ShpBusPrivate *priv;
@@ -266,18 +266,18 @@ shp_bus_set_sync_handler (ShpBus *bus, ShpMessageHandlerFunc func,
   priv->notify = notify;
 }
 
-ShpMessageHandler*
-shp_bus_add_async_handler (ShpBus *bus, ShpMessageHandlerFunc func,
+ShpBusMessageHandler*
+shp_bus_add_async_handler (ShpBus *bus, ShpBusMessageHandlerFunc func,
     gpointer user_data, GDestroyNotify notify, const gchar * source_path)
 {
   ShpBusPrivate *priv;
-  ShpMessageHandler *handler;
+  ShpBusMessageHandler *handler;
 
   g_return_if_fail (IS_SHP_BUS (bus));
 
   priv = bus->priv;
 
-  handler = g_slice_new (ShpMessageHandler);
+  handler = g_slice_new (ShpBusMessageHandler);
   handler->func = func;
   handler->data = user_data;
   handler->notify = notify;
@@ -291,7 +291,7 @@ shp_bus_add_async_handler (ShpBus *bus, ShpMessageHandlerFunc func,
 }
 
 void
-shp_bus_remove_async_handler (ShpBus * bus, ShpMessageHandler * handler)
+shp_bus_remove_async_handler (ShpBus * bus, ShpBusMessageHandler * handler)
 {
   ShpBusPrivate *priv;
 

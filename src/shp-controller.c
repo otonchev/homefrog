@@ -31,7 +31,7 @@ G_DEFINE_TYPE (ShpController, shp_controller, G_TYPE_OBJECT);
 
 struct _ShpControllerPrivate {
   GSList *rules;
-  ShpMessageHandler *handler;
+  ShpBusMessageHandler *handler;
 };
 
 static void shp_controller_finalize (GObject * object);
@@ -136,7 +136,7 @@ shp_controller_start (ShpComponent * component)
 
   g_return_val_if_fail (IS_SHP_CONTROLLER (controller), FALSE);
 
-  priv = SHP_CONTROLLER (controller)->priv;
+  priv = controller->priv;
 
   g_debug ("starting controller");
 
