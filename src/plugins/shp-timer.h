@@ -15,8 +15,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __SHP_MYSQL_H__
-#define __SHP_MYSQL_H__
+
+/*
+ * Timer plugin emitting current time and date every 1s.
+ */
+
+#ifndef __SHP_TIMER_H__
+#define __SHP_TIMER_H__
 
 #include <glib.h>
 #include <glib-object.h>
@@ -25,44 +30,39 @@
 
 G_BEGIN_DECLS
 
-#define SHP_MYSQL_TYPE (shp_mysql_get_type ())
-#define SHP_MYSQL(object) (G_TYPE_CHECK_INSTANCE_CAST ((object), SHP_MYSQL_TYPE,ShpMysql))
-#define SHP_MYSQL_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST ((klass), SHP_MYSQL_TYPE, ShpMysqlClass))
-#define IS_SHP_MYSQL(object) (G_TYPE_CHECK_INSTANCE_TYPE ((object), SHP_MYSQL_TYPE))
-#define IS_SHP_MYSQL_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), SHP_MYSQL_TYPE))
-#define SHP_MYSQL_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), SHP_MYSQL_TYPE, ShpMysqlClass))
+#define SHP_TIMER_TYPE (shp_timer_get_type ())
+#define SHP_TIMER(object) (G_TYPE_CHECK_INSTANCE_CAST ((object), SHP_TIMER_TYPE,ShpTimer))
+#define SHP_TIMER_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST ((klass), SHP_TIMER_TYPE, ShpTimerClass))
+#define IS_SHP_TIMER(object) (G_TYPE_CHECK_INSTANCE_TYPE ((object), SHP_TIMER_TYPE))
+#define IS_SHP_TIMER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), SHP_TIMER_TYPE))
+#define SHP_TIMER_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), SHP_TIMER_TYPE, ShpTimerClass))
 
-typedef struct _ShpMysql ShpMysql;
-typedef struct _ShpMysqlClass ShpMysqlClass;
+#define SHP_TIMER_INVALID_READING -256
 
-struct _ShpMysql {
+typedef struct _ShpTimer ShpTimer;
+typedef struct _ShpTimerClass ShpTimerClass;
+
+struct _ShpTimer {
   ShpPlugin parent;
 
   /*< protected >*/
 
   /*< private >*/
+  GSource *dispatch_source;
+
   GMainLoop *loop;
   GMainContext *context;
   GThread *thread;
-  GMutex mutex;
-  GPtrArray *readings;
-
-  gchar *database;
-  gchar *username;
-  gchar *password;
-  gchar *table;
 };
 
-struct _ShpMysqlClass {
+struct _ShpTimerClass {
   ShpPluginClass parent_class;
 
   /*< private >*/
 };
 
-void shp_plugin_register (void);
-
-GType shp_mysql_get_type (void);
+GType shp_timer_get_type (void);
 
 G_END_DECLS
 
-#endif /* __SHP_MYSQL_H__ */
+#endif /* __SHP_TIMER_H__ */

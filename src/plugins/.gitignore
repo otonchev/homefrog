@@ -8,3 +8,6 @@ libds1820digitemp_la-shp-base1wire.o
 libtelldus.la
 libtelldus_la-shp-telldus.lo
 libtelldus_la-shp-telldus.o
+libtimer.la
+libtimer_la-shp-timer.lo
+libtimer_la-shp-timer.o

@@ -1,8 +1,8 @@
 lib_LTLIBRARIES = \
 	libds1820digitemp.la \
-	libtelldus.la
+	libtelldus.la \
+	libtimer.la
 #	libmysql.la \
-#	libdayschedule.la \
 #	libraspberrygpio.la \
 #	libgrovedust.la \
 #	libdummy.la
@@ -25,16 +25,16 @@ libtelldus_la_LDFLAGS=-module -avoid-version -shared
 #        -Werror -Wunused -Wall
 #libmysql_la_LIBADD=$(MYSQL_CONFIG_LIBS)
 #libmysql_la_LDFLAGS=-module -avoid-version -shared
-#
-#libdayschedule_la_SOURCES = \
-#        shp-dayschedule.c
-#libdayschedule_la_CFLAGS = \
-#        $(GLIB_CFLAGS) \
-#        $(GOBJECT_CFLAGS) \
-#        -Werror -Wunused -Wall
-#libdayschedule_la_LIBADD=$(MYSQL_CONFIG_LIBS)
-#libdayschedule_la_LDFLAGS=-module -avoid-version -shared
-#
+
+libtimer_la_SOURCES = \
+        shp-timer.c
+libtimer_la_CFLAGS = \
+        $(GLIB_CFLAGS) \
+        $(GOBJECT_CFLAGS) \
+        -Werror -Wunused -Wall
+libtimer_la_LIBADD=
+libtimer_la_LDFLAGS=-module -avoid-version -shared
+
 #libraspberrygpio_la_SOURCES = \
 #	shp-base1wire.c \
 #        shp-raspberrygpio.c
