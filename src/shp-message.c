@@ -1,4 +1,4 @@
-/* The SmartHomeProject.org
+/* homefrog
  * Copyright (C) 2016  Ognyan Tonchev <otonchev at gmail.com >
  *
  * This program is free software: you can redistribute it and/or modify
