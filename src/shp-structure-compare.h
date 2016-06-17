@@ -17,7 +17,7 @@
  */
 
 /*
- * This is a common interface for comparisson of complex data types.
+ * This is a common interface for comparison of complex data types.
  */
 
 #ifndef __SHP_STRUCTURE_COMPARE_H__
@@ -33,7 +33,7 @@ typedef struct _ShpStructureCompareInterface ShpStructureCompareInterface;
 
 #define SHP_TYPE_STRUCTURE_COMPARE         (shp_structure_compare_get_type ())
 #define SHP_STRUCTURE_COMPARE(obj)         (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHP_TYPE_STRUCTURE_COMPARE, ShpStructureCompare))
-#define SHP_IS_STRUCTURE_COMPARE(obj)      (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHP_TYPE_STRUCTURE_COMPARE))
+#define IS_SHP_STRUCTURE_COMPARE(obj)      (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHP_TYPE_STRUCTURE_COMPARE))
 #define SHP_STRUCTURE_COMPARE_GET_INTERFACE(inst) (G_TYPE_INSTANCE_GET_INTERFACE ((inst), SHP_TYPE_STRUCTURE_COMPARE, ShpStructureCompareInterface))
 
 /*
@@ -54,7 +54,8 @@ typedef enum ShpStructureCompareResult
 struct _ShpStructureCompareInterface {
   GTypeInterface iface;
 
-  ShpStructureCompareResult (*compare) (ShpStructureCompare * data2);
+  ShpStructureCompareResult (*compare) (ShpStructureCompare * data1,
+      ShpStructureCompare * data2);
 };
 
 ShpStructureCompareResult

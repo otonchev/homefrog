@@ -23,12 +23,12 @@ ShpStructureCompareResult
 shp_structure_compare_compare (ShpStructureCompare * data1,
     ShpStructureCompare * data2)
 {
-  g_return_val_if_fail (SHP_IS_STRUCTURE_COMPARE (data1),
+  g_return_val_if_fail (IS_SHP_STRUCTURE_COMPARE (data1),
       SHP_STRUCTURE_COMPARE_FAIL);
-  g_return_val_if_fail (SHP_IS_STRUCTURE_COMPARE (data2),
+  g_return_val_if_fail (IS_SHP_STRUCTURE_COMPARE (data2),
       SHP_STRUCTURE_COMPARE_FAIL);
 
-  return SHP_STRUCTURE_COMPARE_GET_INTERFACE (data1)->compare (data2);
+  return SHP_STRUCTURE_COMPARE_GET_INTERFACE (data1)->compare (data1, data2);
 }
 
 static void
