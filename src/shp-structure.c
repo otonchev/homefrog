@@ -17,38 +17,27 @@
  */
 
 /*
- * ShpMessage is the basic unit of passing data from plugins.
+ * ShpStructure is the basic unit of passing data from plugins.
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <glib.h>
 
-#include "shp-message.h"
+#include "shp-structure.h"
 
-enum
-{
-  PROP_0,
-  PROP_NAME,
-  PROP_SOURCE_PATH,
-  PROP_LAST
-};
+G_DEFINE_TYPE (ShpStructure, shp_structure, G_TYPE_OBJECT);
 
-#define DEFAULT_NAME "no_name"
-#define DEFAULT_SOURCE_PATH "/empty path"
-
-G_DEFINE_TYPE (ShpMessage, shp_message, G_TYPE_OBJECT);
-
-struct _ShpMessagePrivate {
+struct _ShpStructurePrivate {
   GHashTable *values;
   gchar *name;
   gchar *source_path;
 };
 
-static void shp_message_finalize (GObject * object);
-static void shp_message_get_property (GObject * object, guint propid,
+static void shp_structure_finalize (GObject * object);
+static void shp_structure_get_property (GObject * object, guint propid,
     GValue * value, GParamSpec * pspec);
-static void shp_message_set_property (GObject * object, guint propid,
+static void shp_structure_set_property (GObject * object, guint propid,
     const GValue * value, GParamSpec * pspec);
 
 typedef struct {
@@ -56,66 +45,46 @@ typedef struct {
 } _ShpValue;
 
 static void
-shp_message_class_init (ShpMessageClass * klass)
+shp_structure_class_init (ShpStructureClass * klass)
 {
   GObjectClass *gobject_class;
 
   gobject_class = G_OBJECT_CLASS (klass);
 
-  g_type_class_add_private (klass, sizeof (ShpMessagePrivate));
+  g_type_class_add_private (klass, sizeof (ShpStructurePrivate));
 
-  gobject_class->finalize = shp_message_finalize;
-  gobject_class->set_property = shp_message_set_property;
-  gobject_class->get_property = shp_message_get_property;
-
-  g_object_class_install_property (gobject_class, PROP_NAME,
-      g_param_spec_string ("name", "message name", "The name of the message",
-          DEFAULT_NAME, G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
-  g_object_class_install_property (gobject_class, PROP_SOURCE_PATH,
-      g_param_spec_string ("source-path", "Spurce path",
-          "Path to the source of this message", DEFAULT_SOURCE_PATH,
-          G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
+  gobject_class->finalize = shp_structure_finalize;
+  gobject_class->set_property = shp_structure_set_property;
+  gobject_class->get_property = shp_structure_get_property;
 }
 
 static void
-shp_message_get_property (GObject * object, guint propid, GValue * value,
+shp_structure_get_property (GObject * object, guint propid, GValue * value,
     GParamSpec * pspec)
 {
-  ShpMessagePrivate *priv;
-  ShpMessage *message = SHP_MESSAGE (object);
+  ShpStructurePrivate *priv;
+  ShpStructure *structure = SHP_STRUCTURE (object);
 
-  priv = message->priv;
+  priv = structure->priv;
+  if (priv);
 
   switch (propid) {
-    case PROP_NAME:
-      g_value_set_string (value, priv->name);
-      break;
-    case PROP_SOURCE_PATH:
-      g_value_set_string (value, priv->source_path);
-      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, propid, pspec);
   }
 }
 
 static void
-shp_message_set_property (GObject * object, guint propid, const GValue * value,
+shp_structure_set_property (GObject * object, guint propid, const GValue * value,
     GParamSpec * pspec)
 {
-  ShpMessagePrivate *priv;
-  ShpMessage *message = SHP_MESSAGE (object);
+  ShpStructurePrivate *priv;
+  ShpStructure *structure = SHP_STRUCTURE (object);
 
-  priv = message->priv;
+  priv = structure->priv;
+  if (priv);
 
   switch (propid) {
-    case PROP_NAME:
-      g_free (priv->name);
-      priv->name = g_strdup (g_value_get_string (value));
-      break;
-    case PROP_SOURCE_PATH:
-      g_free (priv->source_path);
-      priv->source_path = g_strdup (g_value_get_string (value));
-      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, propid, pspec);
   }
@@ -130,27 +99,25 @@ free_value_cb (gpointer data)
 }
 
 static void
-shp_message_init (ShpMessage * self)
+shp_structure_init (ShpStructure * self)
 {
-  ShpMessagePrivate *priv;
+  ShpStructurePrivate *priv;
 
   self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self,
-                                            SHP_MESSAGE_TYPE,
-                                            ShpMessagePrivate);
+                                            SHP_STRUCTURE_TYPE,
+                                            ShpStructurePrivate);
 
   priv = self->priv;
 
   priv->values = g_hash_table_new_full (g_str_hash, g_str_equal, g_free,
       free_value_cb);
-  priv->name = g_strdup (DEFAULT_NAME);
-  priv->source_path = g_strdup (DEFAULT_SOURCE_PATH);
 }
 
 static void
-shp_message_finalize (GObject * object)
+shp_structure_finalize (GObject * object)
 {
-  ShpMessagePrivate *priv;
-  ShpMessage *self = SHP_MESSAGE (object);
+  ShpStructurePrivate *priv;
+  ShpStructure *self = SHP_STRUCTURE (object);
 
   priv = self->priv;
 
@@ -163,35 +130,34 @@ shp_message_finalize (GObject * object)
 }
 
 /**
- * shp_message_new:
+ * shp_structure_new:
  *
- * Creates a new instance of #ShpMessage. Free with g_object_unref()
+ * Creates a new instance of #ShpStructure. Free with g_object_unref()
  * when no-longer needed.
  *
- * Returns: a new instance of #ShpMessage
+ * Returns: a new instance of #ShpStructure
  */
-ShpMessage*
-shp_message_new (const gchar * name, const gchar * source_path)
+ShpStructure*
+shp_structure_new ()
 {
-  return g_object_new (SHP_MESSAGE_TYPE, "name", name, "source_path",
-      source_path, NULL);
+  return g_object_new (SHP_STRUCTURE_TYPE, NULL);
 }
 
 /**
- * shp_message_add_string:
- * @msg: a #ShpMessage
+ * shp_structure_add_string:
+ * @msg: a #ShpStructure
  * @name: data's field name
  * @val: value
  *
- * Add a new key-value pair to a #ShpMessage, value is of type string
+ * Add a new key-value pair to a #ShpStructure, value is of type string
  */
 void
-shp_message_add_string (ShpMessage * msg, const gchar * name,
+shp_structure_add_string (ShpStructure * msg, const gchar * name,
     const gchar * val)
 {
-  ShpMessagePrivate *priv;
+  ShpStructurePrivate *priv;
 
-  g_return_if_fail (IS_SHP_MESSAGE (msg));
+  g_return_if_fail (IS_SHP_STRUCTURE (msg));
   g_return_if_fail (name != NULL);
 
   priv = msg->priv;
@@ -202,38 +168,20 @@ shp_message_add_string (ShpMessage * msg, const gchar * name,
   g_hash_table_insert (priv->values, g_strdup (name), value);
 }
 
-void
-shp_message_add_structure (ShpMessage * msg, const gchar * name,
-    ShpStructure * val)
-{
-  ShpMessagePrivate *priv;
-
-  g_return_if_fail (IS_SHP_MESSAGE (msg));
-  g_return_if_fail (name != NULL);
-  g_return_if_fail (IS_SHP_STRUCTURE (val));
-
-  priv = msg->priv;
-
-  _ShpValue *value = g_new0 (_ShpValue, 1);
-  g_value_init (&value->value, SHP_STRUCTURE_TYPE);
-  g_value_set_object (&value->value, val);
-  g_hash_table_insert (priv->values, g_strdup (name), value);
-}
-
 /**
- * shp_message_add_integer:
- * @msg: a #ShpMessage
+ * shp_structure_add_integer:
+ * @msg: a #ShpStructure
  * @name: data's field name
  * @val: value
  *
- * Add a new key-value pair to a #ShpMessage, value is of type integer
+ * Add a new key-value pair to a #ShpStructure, value is of type integer
  */
 void
-shp_message_add_integer (ShpMessage * msg, const gchar * name, gint val)
+shp_structure_add_integer (ShpStructure * msg, const gchar * name, gint val)
 {
-  ShpMessagePrivate *priv;
+  ShpStructurePrivate *priv;
 
-  g_return_if_fail (IS_SHP_MESSAGE (msg));
+  g_return_if_fail (IS_SHP_STRUCTURE (msg));
   g_return_if_fail (name != NULL);
 
   priv = msg->priv;
@@ -245,19 +193,19 @@ shp_message_add_integer (ShpMessage * msg, const gchar * name, gint val)
 }
 
 /**
- * shp_message_add_double:
- * @msg: a #ShpMessage
+ * shp_structure_add_double:
+ * @msg: a #ShpStructure
  * @name: data's field name
  * @val: value
  *
- * Add a new key-value pair to a #ShpMessage, value is of type double
+ * Add a new key-value pair to a #ShpStructure, value is of type double
  */
 void
-shp_message_add_double (ShpMessage * msg, const gchar * name, gdouble val)
+shp_structure_add_double (ShpStructure * msg, const gchar * name, gdouble val)
 {
-  ShpMessagePrivate *priv;
+  ShpStructurePrivate *priv;
 
-  g_return_if_fail (IS_SHP_MESSAGE (msg));
+  g_return_if_fail (IS_SHP_STRUCTURE (msg));
   g_return_if_fail (name != NULL);
 
   priv = msg->priv;
@@ -269,19 +217,19 @@ shp_message_add_double (ShpMessage * msg, const gchar * name, gdouble val)
 }
 
 /**
- * shp_message_add_boolean:
- * @msg: a #ShpMessage
+ * shp_structure_add_boolean:
+ * @msg: a #ShpStructure
  * @name: data's field name
  * @val: value
  *
- * Add a new key-value pair to a #ShpMessage, value is of type boolean
+ * Add a new key-value pair to a #ShpStructure, value is of type boolean
  */
 void
-shp_message_add_boolean (ShpMessage * msg, const gchar * name, gboolean val)
+shp_structure_add_boolean (ShpStructure * msg, const gchar * name, gboolean val)
 {
-  ShpMessagePrivate *priv;
+  ShpStructurePrivate *priv;
 
-  g_return_if_fail (IS_SHP_MESSAGE (msg));
+  g_return_if_fail (IS_SHP_STRUCTURE (msg));
   g_return_if_fail (name != NULL);
 
   priv = msg->priv;
@@ -293,19 +241,19 @@ shp_message_add_boolean (ShpMessage * msg, const gchar * name, gboolean val)
 }
 
 /**
- * shp_message_add_long:
- * @msg: a #ShpMessage
+ * shp_structure_add_long:
+ * @msg: a #ShpStructure
  * @name: data's field name
  * @val: value
  *
- * Add a new key-value pair to a #ShpMessage, value is of type long
+ * Add a new key-value pair to a #ShpStructure, value is of type long
  */
 void
-shp_message_add_long (ShpMessage * msg, const gchar * name, glong val)
+shp_structure_add_long (ShpStructure * msg, const gchar * name, glong val)
 {
-  ShpMessagePrivate *priv;
+  ShpStructurePrivate *priv;
 
-  g_return_if_fail (IS_SHP_MESSAGE (msg));
+  g_return_if_fail (IS_SHP_STRUCTURE (msg));
   g_return_if_fail (name != NULL);
 
   priv = msg->priv;
@@ -317,24 +265,24 @@ shp_message_add_long (ShpMessage * msg, const gchar * name, glong val)
 }
 
 /**
- * shp_message_has value:
- * @msg: a #ShpMessage
+ * shp_structure_has value:
+ * @msg: a #ShpStructure
  * @name: data's field name
  * @type: msg type
  *
  * Check whether there is a field with name @name and of type @type in the
  * data. This function is normally called before calling any of the
- * shp_message_get_*() set of functions.
+ * shp_structure_get_*() set of functions.
  *
  * Returns: TRUE if such a field exists and FALSE otherwise
  */
 gboolean
-shp_message_has_value (ShpMessage * msg, const gchar * name, GType type)
+shp_structure_has_value (ShpStructure * msg, const gchar * name, GType type)
 {
-  ShpMessagePrivate *priv;
+  ShpStructurePrivate *priv;
   _ShpValue *value;
 
-  g_return_val_if_fail (IS_SHP_MESSAGE (msg), FALSE);
+  g_return_val_if_fail (IS_SHP_STRUCTURE (msg), FALSE);
   g_return_val_if_fail (name != NULL, FALSE);
   g_return_val_if_fail (G_TYPE_IS_FUNDAMENTAL (type), FALSE);
 
@@ -351,8 +299,8 @@ shp_message_has_value (ShpMessage * msg, const gchar * name, GType type)
 }
 
 /**
- * shp_message_get_string:
- * @msg: a #ShpMessage
+ * shp_structure_get_string:
+ * @msg: a #ShpStructure
  * @name: data's field name
  *
  * Returns the value of type string corresponding to @name
@@ -360,13 +308,13 @@ shp_message_has_value (ShpMessage * msg, const gchar * name, GType type)
  * Returns: a value of type string
  */
 const gchar*
-shp_message_get_string (ShpMessage * msg, const gchar * name)
+shp_structure_get_string (ShpStructure * msg, const gchar * name)
 {
-  ShpMessagePrivate *priv;
+  ShpStructurePrivate *priv;
   _ShpValue *value;
   const gchar *ret;
 
-  g_return_val_if_fail (IS_SHP_MESSAGE (msg), NULL);
+  g_return_val_if_fail (IS_SHP_STRUCTURE (msg), NULL);
   g_return_val_if_fail (name != NULL, NULL);
 
   priv = msg->priv;
@@ -385,35 +333,9 @@ shp_message_get_string (ShpMessage * msg, const gchar * name)
   return ret;
 }
 
-const ShpStructure*
-shp_message_get_structure (ShpMessage * msg, const gchar * name)
-{
-  ShpMessagePrivate *priv;
-  _ShpValue *value;
-  const ShpStructure *ret;
-
-  g_return_val_if_fail (IS_SHP_MESSAGE (msg), NULL);
-  g_return_val_if_fail (name != NULL, NULL);
-
-  priv = msg->priv;
-
-  value = g_hash_table_lookup (priv->values, name);
-  if (!value) {
-    g_warning ("incomplete data, missing %s", name);
-    return NULL;
-  }
-  if (G_VALUE_TYPE (&value->value) != SHP_MESSAGE_TYPE) {
-    g_warning ("invalid type of data, expected: %s, got: %s",
-        g_type_name (SHP_MESSAGE_TYPE), G_VALUE_TYPE_NAME (&value->value));
-    return NULL;
-  }
-  ret = g_value_get_object (&value->value);
-  return ret;
-}
-
 /**
- * shp_message_get_integer:
- * @msg: a #ShpMessage
+ * shp_structure_get_integer:
+ * @msg: a #ShpStructure
  * @name: data's field name
  *
  * Returns the value of type integer corresponding to @name
@@ -421,12 +343,12 @@ shp_message_get_structure (ShpMessage * msg, const gchar * name)
  * Returns: a value of type integer
  */
 gboolean
-shp_message_get_integer (ShpMessage * msg, const gchar * name, gint * result)
+shp_structure_get_integer (ShpStructure * msg, const gchar * name, gint * result)
 {
-  ShpMessagePrivate *priv;
+  ShpStructurePrivate *priv;
   _ShpValue *value;
 
-  g_return_val_if_fail (IS_SHP_MESSAGE (msg), FALSE);
+  g_return_val_if_fail (IS_SHP_STRUCTURE (msg), FALSE);
   g_return_val_if_fail (name != NULL, FALSE);
   g_return_val_if_fail (result != NULL, FALSE);
 
@@ -447,8 +369,8 @@ shp_message_get_integer (ShpMessage * msg, const gchar * name, gint * result)
 }
 
 /**
- * shp_message_get_double:
- * @msg: a #ShpMessage
+ * shp_structure_get_double:
+ * @msg: a #ShpStructure
  * @name: data's field name
  *
  * Returns the value of type double corresponding to @name
@@ -456,12 +378,12 @@ shp_message_get_integer (ShpMessage * msg, const gchar * name, gint * result)
  * Returns: a value of type double
  */
 gboolean
-shp_message_get_double (ShpMessage * msg, const gchar * name, gdouble * result)
+shp_structure_get_double (ShpStructure * msg, const gchar * name, gdouble * result)
 {
-  ShpMessagePrivate *priv;
+  ShpStructurePrivate *priv;
   _ShpValue *value;
 
-  g_return_val_if_fail (IS_SHP_MESSAGE (msg), FALSE);
+  g_return_val_if_fail (IS_SHP_STRUCTURE (msg), FALSE);
   g_return_val_if_fail (name != NULL, FALSE);
   g_return_val_if_fail (result != NULL, FALSE);
 
@@ -482,8 +404,8 @@ shp_message_get_double (ShpMessage * msg, const gchar * name, gdouble * result)
 }
 
 /**
- * shp_message_get_boolean:
- * @msg: a #ShpMessage
+ * shp_structure_get_boolean:
+ * @msg: a #ShpStructure
  * @name: data's field name
  *
  * Returns the value of type boolean corresponding to @name
@@ -491,13 +413,13 @@ shp_message_get_double (ShpMessage * msg, const gchar * name, gdouble * result)
  * Returns: a value of type boolean
  */
 gboolean
-shp_message_get_boolean (ShpMessage * msg, const gchar * name,
+shp_structure_get_boolean (ShpStructure * msg, const gchar * name,
     gboolean * result)
 {
-  ShpMessagePrivate *priv;
+  ShpStructurePrivate *priv;
   _ShpValue *value;
 
-  g_return_val_if_fail (IS_SHP_MESSAGE (msg), FALSE);
+  g_return_val_if_fail (IS_SHP_STRUCTURE (msg), FALSE);
   g_return_val_if_fail (name != NULL, FALSE);
   g_return_val_if_fail (result != NULL, FALSE);
 
@@ -518,8 +440,8 @@ shp_message_get_boolean (ShpMessage * msg, const gchar * name,
 }
 
 /**
- * shp_message_get_long:
- * @msg: a #ShpMessage
+ * shp_structure_get_long:
+ * @msg: a #ShpStructure
  * @name: data's field name
  *
  * Returns the value of type long corresponding to @name
@@ -527,12 +449,12 @@ shp_message_get_boolean (ShpMessage * msg, const gchar * name,
  * Returns: a value of type long
  */
 gboolean
-shp_message_get_long (ShpMessage * msg, const gchar * name, glong * result)
+shp_structure_get_long (ShpStructure * msg, const gchar * name, glong * result)
 {
-  ShpMessagePrivate *priv;
+  ShpStructurePrivate *priv;
   _ShpValue *value;
 
-  g_return_val_if_fail (IS_SHP_MESSAGE (msg), FALSE);
+  g_return_val_if_fail (IS_SHP_STRUCTURE (msg), FALSE);
   g_return_val_if_fail (name != NULL, FALSE);
   g_return_val_if_fail (result != NULL, FALSE);
 
@@ -553,7 +475,7 @@ shp_message_get_long (ShpMessage * msg, const gchar * name, glong * result)
 }
 
 typedef struct {
-  ShpMessageFunc func;
+  ShpStructureFunc func;
   gpointer user_data;
 } _ShpFuncData;
 
@@ -562,7 +484,7 @@ foreach_cb (gpointer key, gpointer val, gpointer data)
 {
   _ShpFuncData *func_data = data;
 
-  ShpMessageFunc func = func_data->func;
+  ShpStructureFunc func = func_data->func;
   const gchar *name = key;
   const _ShpValue  *value = val;
 
@@ -570,19 +492,19 @@ foreach_cb (gpointer key, gpointer val, gpointer data)
 }
 
 /**
- * shp_message_size:
- * @msg: a #ShpMessage
+ * shp_structure_size:
+ * @msg: a #ShpStructure
  *
  * Returns number of parameters in @msg
  *
  * Returns: number of parameters in @msg
  */
 guint
-shp_message_size (ShpMessage * msg)
+shp_structure_size (ShpStructure * msg)
 {
-  ShpMessagePrivate *priv;
+  ShpStructurePrivate *priv;
 
-  g_return_if_fail (IS_SHP_MESSAGE (msg));
+  g_return_if_fail (IS_SHP_STRUCTURE (msg));
 
   priv = msg->priv;
 
@@ -590,21 +512,21 @@ shp_message_size (ShpMessage * msg)
 }
 
 /**
- * shp_message_foreach:
- * @msg: a #ShpMessage
- * @func: a #ShpMessageFunc to be called
+ * shp_structure_foreach:
+ * @msg: a #ShpStructure
+ * @func: a #ShpStructureFunc to be called
  * @user_data: user data to be submitted when calling @func
  *
  * Calls @func for each parameter in @msg
  */
 void
-shp_message_foreach (ShpMessage * msg, ShpMessageFunc func,
+shp_structure_foreach (ShpStructure * msg, ShpStructureFunc func,
     gpointer user_data)
 {
-  ShpMessagePrivate *priv;
+  ShpStructurePrivate *priv;
   _ShpFuncData *func_data;
 
-  g_return_if_fail (IS_SHP_MESSAGE (msg));
+  g_return_if_fail (IS_SHP_STRUCTURE (msg));
   g_return_if_fail (func != NULL);
 
   priv = msg->priv;
@@ -619,12 +541,12 @@ shp_message_foreach (ShpMessage * msg, ShpMessageFunc func,
 }
 
 GType
-shp_message_get_field_type (ShpMessage * msg, const gchar * name)
+shp_structure_get_field_type (ShpStructure * msg, const gchar * name)
 {
-  ShpMessagePrivate *priv;
+  ShpStructurePrivate *priv;
   _ShpValue *value;
 
-  g_return_val_if_fail (IS_SHP_MESSAGE (msg), G_TYPE_INVALID);
+  g_return_val_if_fail (IS_SHP_STRUCTURE (msg), G_TYPE_INVALID);
   g_return_val_if_fail (name != NULL, G_TYPE_INVALID);
 
   priv = msg->priv;
@@ -635,26 +557,4 @@ shp_message_get_field_type (ShpMessage * msg, const gchar * name)
     return G_TYPE_INVALID;
   }
   return G_VALUE_TYPE (&value);
-}
-
-const char*
-shp_message_get_name (ShpMessage * msg)
-{
-  ShpMessagePrivate *priv;
-  g_return_val_if_fail (IS_SHP_MESSAGE (msg), NULL);
-
-  priv = msg->priv;
-
-  return priv->name;
-}
-
-const char*
-shp_message_get_source_path (ShpMessage * msg)
-{
-  ShpMessagePrivate *priv;
-  g_return_val_if_fail (IS_SHP_MESSAGE (msg), NULL);
-
-  priv = msg->priv;
-
-  return priv->source_path;
 }

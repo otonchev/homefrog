@@ -26,6 +26,8 @@
 #include <glib.h>
 #include <glib-object.h>
 
+#include "shp-structure.h"
+
 G_BEGIN_DECLS
 
 #define SHP_MESSAGE_TYPE (shp_message_get_type ())
@@ -64,6 +66,7 @@ void shp_message_add_integer (ShpMessage * msg, const gchar * name, gint value);
 void shp_message_add_double (ShpMessage * msg, const gchar * name, gdouble value);
 void shp_message_add_boolean (ShpMessage * msg, const gchar * name, gboolean value);
 void shp_message_add_long (ShpMessage * msg, const gchar * name, glong value);
+void shp_message_add_structure (ShpMessage * msg, const gchar * name, ShpStructure * value);
 
 gboolean shp_message_has_value (ShpMessage * msg, const gchar * name, GType type);
 GType shp_message_get_field_type (ShpMessage * msg, const gchar * name);
@@ -73,6 +76,7 @@ gboolean shp_message_get_integer (ShpMessage * msg, const gchar * name, gint * v
 gboolean shp_message_get_double (ShpMessage * msg, const gchar * name, gdouble * value);
 gboolean shp_message_get_boolean (ShpMessage * msg, const gchar * name, gboolean * value);
 gboolean shp_message_get_long (ShpMessage * msg, const gchar * name, glong * value);
+const ShpStructure * shp_message_get_structure (ShpMessage * msg, const gchar * name);
 
 guint shp_message_size (ShpMessage * msg);
 

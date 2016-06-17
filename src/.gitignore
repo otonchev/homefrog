@@ -12,3 +12,5 @@ shp-shp-plugin.o
 shp-shp-rule.o
 shp-shp-scene.o
 shp-shp-slave-plugin.o
+shp-shp-structure.o
+shp-shp-structure-compare.o

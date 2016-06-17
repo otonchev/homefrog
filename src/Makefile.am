@@ -24,7 +24,9 @@ shp_SOURCES = \
 	shp-plugin-factory.c \
 	shp-rule.c \
 	shp-scene.c \
-	shp-slave-plugin.c
+	shp-slave-plugin.c \
+	shp-structure.c \
+	shp-structure-compare.c
 
 nodist_shp_SOURCES = $(GENERATED_C)
 noinst_HEADERS = $(GENERATED_H)
