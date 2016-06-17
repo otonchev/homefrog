@@ -160,9 +160,8 @@ send_status (ShpBase1wire * self)
 
   g_debug ("base1wire: sending status update: %f", reading);
 
-  msg = shp_message_new (shp_component_get_name (component),
-      shp_component_get_path (component));
-  shp_message_add_double (msg, "reading", reading);
+  msg = shp_message_new (shp_component_get_path (component));
+  shp_message_add_double (msg, "temperature", reading);
 
   if (!shp_component_post_message (component, msg)) {
     g_warning ("base1wire: could not post message on bus");

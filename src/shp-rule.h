@@ -60,8 +60,7 @@ struct _ShpRuleClass {
 };
 
 ShpRule * shp_rule_new ();
-void shp_rule_add_condition (ShpRule * rule, ShpCondition * condition,
-    const gchar * path);
+void shp_rule_add_condition (ShpRule * rule, ShpCondition * condition);
 void shp_rule_set_scene (ShpRule * rule, ShpScene * scene);
 gboolean shp_rule_process_event (ShpRule * rule, ShpMessage * event);
 

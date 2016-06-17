@@ -108,8 +108,7 @@ send_status (ShpTimer * self)
 
   g_debug ("timer: sending status update");
 
-  msg = shp_message_new (shp_component_get_name (component),
-      shp_component_get_path (component));
+  msg = shp_message_new (shp_component_get_path (component));
   shp_message_add_integer (msg, "hour", tm_struct->tm_hour);
   shp_message_add_integer (msg, "minutes", tm_struct->tm_min);
   shp_message_add_integer (msg, "seconds", tm_struct->tm_sec);

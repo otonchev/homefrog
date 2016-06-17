@@ -171,10 +171,9 @@ shp_message_finalize (GObject * object)
  * Returns: a new instance of #ShpMessage
  */
 ShpMessage*
-shp_message_new (const gchar * name, const gchar * source_path)
+shp_message_new (const gchar * source_path)
 {
-  return g_object_new (SHP_MESSAGE_TYPE, "name", name, "source_path",
-      source_path, NULL);
+  return g_object_new (SHP_MESSAGE_TYPE, "source_path", source_path, NULL);
 }
 
 /**

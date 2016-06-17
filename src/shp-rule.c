@@ -135,17 +135,17 @@ shp_rule_new ()
 }
 
 void
-shp_rule_add_condition (ShpRule * rule, ShpCondition * condition,
-    const gchar * path)
+shp_rule_add_condition (ShpRule * rule, ShpCondition * condition)
 {
   ShpRulePrivate *priv;
+  const gchar *path;
 
   g_return_if_fail (IS_SHP_RULE (rule));
   g_return_if_fail (IS_SHP_CONDITION (condition));
-  g_return_if_fail (path != NULL);
 
   priv = rule->priv;
 
+  path = shp_condition_get_path (condition);
   g_hash_table_insert (priv->conditions, g_strdup (path), condition);
 }
 

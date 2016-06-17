@@ -62,13 +62,16 @@ struct _ShpConditionClass {
   /*< private >*/
 };
 
-ShpCondition * shp_condition_new ();
+ShpCondition * shp_condition_new (const gchar * path);
+const gchar *shp_condition_get_path (ShpCondition * condition);
 void shp_condition_add_string_option (ShpCondition * condition,
     const gchar * value_name, const gchar * value, ShpConditionOperator op);
 void shp_condition_add_double_option (ShpCondition * condition,
     const gchar * value_name, gdouble value, ShpConditionOperator op);
 void shp_condition_add_integer_option (ShpCondition * condition,
     const gchar * value_name, gint value, ShpConditionOperator op);
+void shp_condition_add_structure_option (ShpCondition * condition,
+    const gchar * value_name, ShpStructure * value, ShpConditionOperator op);
 gboolean shp_condition_is_satisfied (ShpCondition * condition);
 gboolean shp_condition_process_event (ShpCondition * condition,
     const ShpMessage * event);

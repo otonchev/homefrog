@@ -25,10 +25,22 @@
 #include <glib.h>
 
 #include "shp-condition.h"
+#include "shp-structure.h"
+#include "shp-structure-compare.h"
 
 G_DEFINE_TYPE (ShpCondition, shp_condition, G_TYPE_OBJECT);
 
+#define DEFAULT_PATH "/empty path"
+
+enum
+{
+  PROP_0,
+  PROP_PATH,
+  PROP_LAST
+};
+
 struct _ShpConditionPrivate {
+  gchar *path;
   gboolean satisfied;
   GSList *options;
 };
@@ -58,35 +70,45 @@ shp_condition_class_init (ShpConditionClass * klass)
   gobject_class->finalize = shp_condition_finalize;
   gobject_class->set_property = shp_condition_set_property;
   gobject_class->get_property = shp_condition_get_property;
+
+  g_object_class_install_property (gobject_class, PROP_PATH,
+      g_param_spec_string ("path", "Component path",
+          "Path to the component", DEFAULT_PATH,
+          G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 }
 
 static void
 shp_condition_get_property (GObject * object, guint propid, GValue * value,
     GParamSpec * pspec)
 {
-/*
   ShpConditionPrivate *priv;
   ShpCondition *condition = SHP_CONDITION (object);
 
   priv = condition->priv;
-*/
+
   switch (propid) {
+    case PROP_PATH:
+      g_value_set_string (value, priv->path);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, propid, pspec);
   }
 }
 
 static void
-shp_condition_set_property (GObject * object, guint propid, const GValue * value,
-    GParamSpec * pspec)
+shp_condition_set_property (GObject * object, guint propid,
+    const GValue * value, GParamSpec * pspec)
 {
-/*
   ShpConditionPrivate *priv;
   ShpCondition *condition = SHP_CONDITION (object);
 
   priv = condition->priv;
-*/
+
   switch (propid) {
+    case PROP_PATH:
+      g_free (priv->path);
+      priv->path = g_strdup (g_value_get_string (value));
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, propid, pspec);
   }
@@ -95,9 +117,15 @@ shp_condition_set_property (GObject * object, guint propid, const GValue * value
 static void
 shp_condition_init (ShpCondition * self)
 {
+  ShpConditionPrivate *priv;
+
   self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self,
                                             SHP_CONDITION_TYPE,
                                             ShpConditionPrivate);
+
+  priv = self->priv;
+
+  priv->path = g_strdup (DEFAULT_PATH);
 }
 
 static void
@@ -121,6 +149,9 @@ shp_condition_finalize (GObject * object)
     g_slist_free_full (priv->options, free_option);
     priv->options = NULL;
   }
+
+  g_free (priv->path);
+  priv->path = NULL;
 }
 
 /**
@@ -132,9 +163,9 @@ shp_condition_finalize (GObject * object)
  * Returns: a new instance of #ShpCondition
  */
 ShpCondition*
-shp_condition_new ()
+shp_condition_new (const gchar * path)
 {
-  return g_object_new (SHP_CONDITION_TYPE, NULL);
+  return g_object_new (SHP_CONDITION_TYPE, "path", path, NULL);
 }
 
 static _Option*
@@ -165,6 +196,25 @@ shp_condition_add_string_option (ShpCondition * condition,
   option = option_new (G_TYPE_STRING, value_name, op);
   g_value_init (&option->value, G_TYPE_STRING);
   g_value_set_string (&option->value, value);
+
+  priv->options = g_slist_append (priv->options, option);
+}
+
+void
+shp_condition_add_structure_option (ShpCondition * condition,
+    const gchar * value_name, ShpStructure * value, ShpConditionOperator op)
+{
+  ShpConditionPrivate *priv;
+  _Option *option;
+
+  g_return_if_fail (IS_SHP_CONDITION (condition));
+  g_return_if_fail (op == SHP_CONDITION_OPERATOR_EQ);
+
+  priv = condition->priv;
+
+  option = option_new (SHP_STRUCTURE_TYPE, value_name, op);
+  g_value_init (&option->value, SHP_STRUCTURE_TYPE);
+  g_value_set_object (&option->value, value);
 
   priv->options = g_slist_append (priv->options, option);
 }
@@ -220,28 +270,25 @@ check_event (ShpCondition * condition, const ShpMessage * event)
   options = priv->options;
   while (options != NULL) {
     _Option *option = (_Option *) (options->data);
-    const gchar *event_value_str;
-    const gchar *option_value_str;
-    gint event_value_int;
-    gint option_value_int;
-    gdouble event_value_double;
-    gdouble option_value_double;
 
-    switch (option->value_type) {
-      case G_TYPE_STRING:
-        option_value_str = g_value_get_string (&option->value);
-        event_value_str = shp_message_get_string ((ShpMessage *) event,
-            option->value_name);
-        if (g_strcmp0 (event_value_str, option_value_str))
-          result = FALSE;
-        break;
-      case G_TYPE_DOUBLE:
-        option_value_double = g_value_get_double (&option->value);
-        if (!shp_message_get_double ((ShpMessage *) event,
-            option->value_name, &event_value_double)) {
-          result = FALSE;
-          break;
-        }
+    if (option->value_type == G_TYPE_STRING) {
+      const gchar *event_value_str;
+      const gchar *option_value_str;
+
+      option_value_str = g_value_get_string (&option->value);
+      event_value_str = shp_message_get_string ((ShpMessage *) event,
+          option->value_name);
+      if (g_strcmp0 (event_value_str, option_value_str))
+        result = FALSE;
+    } else if (option->value_type == G_TYPE_DOUBLE) {
+      gdouble event_value_double;
+      gdouble option_value_double;
+
+      option_value_double = g_value_get_double (&option->value);
+      if (!shp_message_get_double ((ShpMessage *) event,
+          option->value_name, &event_value_double)) {
+        result = FALSE;
+      } else {
         switch (option->op) {
           case SHP_CONDITION_OPERATOR_EQ:
             if (option_value_double != event_value_double)
@@ -260,14 +307,16 @@ check_event (ShpCondition * condition, const ShpMessage * event)
             result = FALSE;
             break;
         };
-        break;
-      case G_TYPE_INT:
-        option_value_int = g_value_get_int (&option->value);
-        if (!shp_message_get_integer ((ShpMessage *) event,
-            option->value_name, &event_value_int)) {
-          result = FALSE;
-          break;
-        }
+      }
+    } else if (option->value_type == G_TYPE_INT) {
+      gint event_value_int;
+      gint option_value_int;
+
+      option_value_int = g_value_get_int (&option->value);
+      if (!shp_message_get_integer ((ShpMessage *) event,
+          option->value_name, &event_value_int)) {
+        result = FALSE;
+      } else {
         switch (option->op) {
           case SHP_CONDITION_OPERATOR_EQ:
             if (option_value_int != event_value_int)
@@ -286,11 +335,40 @@ check_event (ShpCondition * condition, const ShpMessage * event)
             result = FALSE;
             break;
         };
-        break;
-      default:
-        g_assert_not_reached ();
-        result = FALSE;
-        break;
+      }
+    } else if (option->value_type == SHP_STRUCTURE_TYPE) {
+      const ShpStructure *event_value_struct;
+      const ShpStructure *option_value_struct;
+      ShpStructureCompareResult cmp_result;
+
+      option_value_struct = g_value_get_object (&option->value);
+      event_value_struct = shp_message_get_structure ((ShpMessage *) event,
+          option->value_name);
+      cmp_result =
+          shp_structure_compare_compare (SHP_STRUCTURE_COMPARE (option_value_struct),
+          SHP_STRUCTURE_COMPARE (event_value_struct));
+      switch (option->op) {
+        case SHP_CONDITION_OPERATOR_EQ:
+          if (cmp_result != SHP_STRUCTURE_COMPARE_EQ)
+            result = FALSE;
+          break;
+        case SHP_CONDITION_OPERATOR_GT:
+          if (cmp_result != SHP_STRUCTURE_COMPARE_GT)
+            result = FALSE;
+          break;
+        case SHP_CONDITION_OPERATOR_LT:
+          if (cmp_result != SHP_STRUCTURE_COMPARE_LT)
+            result = FALSE;
+          break;
+        default:
+          g_assert_not_reached ();
+          result = FALSE;
+          break;
+      };
+    } else {
+      g_assert_not_reached ();
+      result = FALSE;
+      break;
     };
 
     if (!result)
@@ -327,4 +405,16 @@ shp_condition_is_satisfied (ShpCondition * condition)
   priv = condition->priv;
 
   return priv->satisfied;
+}
+
+const gchar*
+shp_condition_get_path (ShpCondition * condition)
+{
+  ShpConditionPrivate *priv;
+
+  g_return_val_if_fail (IS_SHP_CONDITION (condition), FALSE);
+
+  priv = condition->priv;
+
+  return priv->path;
 }

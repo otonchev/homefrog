@@ -32,7 +32,7 @@ static GMutex mutex;
  * g_object_unref() when no longer needed.
  */
 ShpPlugin*
-shp_plugin_factory_create (gchar * name)
+shp_plugin_factory_create (gchar * name, gchar * path)
 {
   ShpPlugin *plugin = NULL;
   gpointer tmp;
@@ -51,7 +51,7 @@ shp_plugin_factory_create (gchar * name)
 
   object_type = GPOINTER_TO_UINT (tmp);
 
-  plugin = g_object_new (object_type, "name", name, NULL);
+  plugin = g_object_new (object_type, "name", name, "path", path, NULL);
 
   return plugin;
 }

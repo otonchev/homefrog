@@ -161,10 +161,10 @@ shp_group_start (ShpComponent * component)
  * Returns: a new instance of #ShpGroup
  */
 ShpGroup*
-shp_group_new ()
+shp_group_new (ShpBus * bus)
 {
   g_debug ("creating new group");
-  return g_object_new (SHP_GROUP_TYPE, NULL);
+  return g_object_new (SHP_GROUP_TYPE, "bus", bus, NULL);
 }
 
 /**
@@ -180,7 +180,7 @@ shp_group_new ()
  * Returns: TRUE on success and FALSE otherwise
  */
 gboolean
-shp_group_add_component (ShpGroup * group, ShpComponent * component)
+shp_group_add (ShpGroup * group, ShpComponent * component)
 {
   ShpGroupPrivate *priv;
 

@@ -120,8 +120,7 @@ signal_new_status (ShpTelldus * self, gboolean on)
 
   g_debug ("telldus: signalling new status: %d", on);
 
-  msg = shp_message_new (shp_component_get_name (component),
-      shp_component_get_path (component));
+  msg = shp_message_new (shp_component_get_path (component));
   shp_message_add_string (msg, "status", (on) ? "on" : "off");
 
   if (!shp_component_post_message (component, msg))

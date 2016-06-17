@@ -27,6 +27,7 @@
 #include <glib.h>
 #include <glib-object.h>
 
+#include "shp-bus.h"
 #include "shp-component.h"
 
 G_BEGIN_DECLS
@@ -71,7 +72,7 @@ struct _ShpGroupClass {
   /* virtual methods for subclasses */
 };
 
-ShpGroup* shp_group_new ();
+ShpGroup* shp_group_new (ShpBus * bus);
 gboolean shp_group_add (ShpGroup * self, ShpComponent * component);
 
 GType shp_group_get_type (void);

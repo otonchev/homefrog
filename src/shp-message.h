@@ -59,7 +59,7 @@ struct _ShpMessageClass {
   /*< private >*/
 };
 
-ShpMessage* shp_message_new (const gchar * name, const gchar * source_path);
+ShpMessage* shp_message_new (const gchar * source_path);
 
 void shp_message_add_string (ShpMessage * msg, const gchar * name, const gchar * value);
 void shp_message_add_integer (ShpMessage * msg, const gchar * name, gint value);
