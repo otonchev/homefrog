@@ -33,6 +33,7 @@ struct _ShpBusMessageHandler {
   gpointer data;
   GDestroyNotify notify;
   gchar *source_path;
+  gchar *destination_path;
 };
 
 struct _ShpBusPrivate {
@@ -88,6 +89,7 @@ message_handler_free (gpointer data)
   if (handler->data != NULL && handler->notify != NULL)
     handler->notify (handler->data);
   g_free (handler->source_path);
+  g_free (handler->destination_path);
   g_slice_free (ShpBusMessageHandler, handler);
 }
 
@@ -132,6 +134,7 @@ thread_func (gpointer data)
   while (TRUE) {
     ShpMessage *msg;
     GSList *handlers;
+    gchar *msg_str;
 
     g_mutex_lock (&priv->message_mutex);
     while (!priv->thread_stop &&
@@ -148,19 +151,41 @@ thread_func (gpointer data)
     g_mutex_lock (&priv->mutex);
     handlers = priv->message_handlers;
 
+    msg_str = shp_message_to_string (msg);
+    g_debug ("bus: find handlers for message: %s", msg_str);
+    g_free (msg_str);
+
     while (handlers != NULL) {
       gboolean call_func = TRUE;
       ShpBusMessageHandler *handler = (ShpBusMessageHandler *)(handlers->data);
 
+      g_debug ("bus: checking handler");
+
       /* check if source_path matches if present */
       if (handler->source_path) {
         const gchar *source_path = shp_message_get_source_path (msg);
+        g_debug ("bus: source handler path: %s, event path: %s",
+            handler->source_path, source_path);
         if (g_strcmp0 (handler->source_path, source_path))
           call_func = FALSE;
       }
 
-      if (call_func)
+      /* check if destination_path matches if present */
+      if (handler->destination_path) {
+        const gchar *destination_path = shp_message_get_destination_path (msg);
+        g_debug ("bus: destination handler path: %s, event path: %s",
+            handler->destination_path, destination_path);
+        if (g_strcmp0 (handler->destination_path, destination_path))
+          call_func = FALSE;
+      }
+
+      if (call_func) {
+        g_debug ("bus: handler supports paths: %s, %s", handler->source_path,
+            handler->destination_path);
         handler->func (bus, msg, handler->data);
+      } else
+        g_debug ("bus: handler does not support paths: %s, %s",
+            handler->source_path, handler->destination_path);
       handlers = g_slist_next (handlers);
     }
 
@@ -271,7 +296,8 @@ shp_bus_set_sync_handler (ShpBus *bus, ShpBusMessageHandlerFunc func,
 
 ShpBusMessageHandler*
 shp_bus_add_async_handler (ShpBus *bus, ShpBusMessageHandlerFunc func,
-    gpointer user_data, GDestroyNotify notify, const gchar * source_path)
+    gpointer user_data, GDestroyNotify notify, const gchar * source_path,
+    const gchar * destination_path)
 {
   ShpBusPrivate *priv;
   ShpBusMessageHandler *handler;
@@ -280,11 +306,15 @@ shp_bus_add_async_handler (ShpBus *bus, ShpBusMessageHandlerFunc func,
 
   priv = bus->priv;
 
+  g_debug ("bus: registering handler for paths: %s, %s", source_path,
+      destination_path);
+
   handler = g_slice_new (ShpBusMessageHandler);
   handler->func = func;
   handler->data = user_data;
   handler->notify = notify;
   handler->source_path = g_strdup (source_path);
+  handler->destination_path = g_strdup (destination_path);
 
   g_mutex_lock (&priv->mutex);
   priv->message_handlers = g_slist_append (priv->message_handlers, handler);

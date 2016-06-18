@@ -89,7 +89,7 @@ main (int argc, char *argv[])
     /* load telldus plugin for controlling heater */
     telldus = shp_plugin_factory_create ("telldus",
         "/home/floor1/LivingRoom/Heater");
-    g_object_set (G_OBJECT (telldus), "device-id", 1, NULL);
+    g_object_set (G_OBJECT (telldus), "device-id", 2, NULL);
 
     /* create the group and add the event bus, the controller and the plugins to
      * it */
@@ -103,8 +103,8 @@ main (int argc, char *argv[])
 
     /* create scene with one event */
     scene = shp_scene_new (g_object_ref (bus));
-    event = shp_message_new ("/home/floor1/LivingRoom/Heater");
-    shp_message_add_string (event, "status", "on");
+    event = shp_message_new_command ("/home/floor1/LivingRoom/Heater");
+    shp_message_add_string (event, "command", "on");
     shp_scene_add_event (scene, event);
 
     /* create condition to be checked before activating the scene */

@@ -202,16 +202,18 @@ message_received (ShpSlavePlugin * plugin, ShpBus * bus,
       ShpMessage * message)
 {
   gboolean set_on;
-  const gchar *status;
+  const gchar *command;
   ShpTelldus *self = SHP_TELLDUS (plugin);
+
+  g_debug ("telldus: received event");
 
   if (self->device_id == UNKNOWN_DEVICE_ID) {
     g_warning ("incomplete configuration, missing 'device-id'");
     return;
   }
 
-  status = shp_message_get_string (message, "status");
-  set_on = !g_strcmp0 (status, "on");
+  command = shp_message_get_string (message, "command");
+  set_on = !g_strcmp0 (command, "on");
 
   if (set_on && get_status (SHP_TELLDUS (plugin)) != 1)
     change_status (SHP_TELLDUS (plugin), TRUE);

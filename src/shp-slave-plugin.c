@@ -104,7 +104,7 @@ shp_slave_plugin_start (ShpComponent * component)
 
   priv = plugin->priv;
 
-  g_debug ("starting slaveplugin");
+  g_debug ("slaveplugin: starting slaveplugin");
 
   bus = shp_component_find_bus (component);
   if (!bus) {
@@ -112,9 +112,12 @@ shp_slave_plugin_start (ShpComponent * component)
     return FALSE;
   }
 
+  g_debug ("slaveplugin: registering handler for path: %s",
+      shp_component_get_path (component));
+
   priv->handler = shp_bus_add_async_handler (bus, message_received,
       g_object_ref (plugin), g_object_unref,
-      shp_component_get_path (component));
+      NULL, shp_component_get_path (component));
   g_object_unref (bus);
 
   return TRUE;

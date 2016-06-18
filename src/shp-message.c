@@ -31,11 +31,13 @@ enum
   PROP_0,
   PROP_NAME,
   PROP_SOURCE_PATH,
+  PROP_DESTINATION_PATH,
   PROP_LAST
 };
 
 #define DEFAULT_NAME "no_name"
 #define DEFAULT_SOURCE_PATH "/empty path"
+#define DEFAULT_DESTINATION_PATH "/empty path"
 
 G_DEFINE_TYPE (ShpMessage, shp_message, G_TYPE_OBJECT);
 
@@ -43,6 +45,7 @@ struct _ShpMessagePrivate {
   GHashTable *values;
   gchar *name;
   gchar *source_path;
+  gchar *destination_path;
 };
 
 static void shp_message_finalize (GObject * object);
@@ -72,8 +75,12 @@ shp_message_class_init (ShpMessageClass * klass)
       g_param_spec_string ("name", "message name", "The name of the message",
           DEFAULT_NAME, G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
   g_object_class_install_property (gobject_class, PROP_SOURCE_PATH,
-      g_param_spec_string ("source-path", "Spurce path",
+      g_param_spec_string ("source-path", "Source path",
           "Path to the source of this message", DEFAULT_SOURCE_PATH,
+          G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
+  g_object_class_install_property (gobject_class, PROP_DESTINATION_PATH,
+      g_param_spec_string ("destination-path", "Destination path",
+          "Path to the destination of this message", DEFAULT_DESTINATION_PATH,
           G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 }
 
@@ -92,6 +99,9 @@ shp_message_get_property (GObject * object, guint propid, GValue * value,
       break;
     case PROP_SOURCE_PATH:
       g_value_set_string (value, priv->source_path);
+      break;
+    case PROP_DESTINATION_PATH:
+      g_value_set_string (value, priv->destination_path);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, propid, pspec);
@@ -115,6 +125,10 @@ shp_message_set_property (GObject * object, guint propid, const GValue * value,
     case PROP_SOURCE_PATH:
       g_free (priv->source_path);
       priv->source_path = g_strdup (g_value_get_string (value));
+      break;
+    case PROP_DESTINATION_PATH:
+      g_free (priv->destination_path);
+      priv->destination_path = g_strdup (g_value_get_string (value));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, propid, pspec);
@@ -144,6 +158,7 @@ shp_message_init (ShpMessage * self)
       free_value_cb);
   priv->name = g_strdup (DEFAULT_NAME);
   priv->source_path = g_strdup (DEFAULT_SOURCE_PATH);
+  priv->destination_path = g_strdup (DEFAULT_DESTINATION_PATH);
 }
 
 static void
@@ -160,6 +175,8 @@ shp_message_finalize (GObject * object)
   priv->name = NULL;
   g_free (priv->source_path);
   priv->source_path = NULL;
+  g_free (priv->destination_path);
+  priv->destination_path = NULL;
 }
 
 /**
@@ -173,7 +190,14 @@ shp_message_finalize (GObject * object)
 ShpMessage*
 shp_message_new (const gchar * source_path)
 {
-  return g_object_new (SHP_MESSAGE_TYPE, "source_path", source_path, NULL);
+  return g_object_new (SHP_MESSAGE_TYPE, "source-path", source_path, NULL);
+}
+
+ShpMessage*
+shp_message_new_command (const gchar * destination_path)
+{
+  return g_object_new (SHP_MESSAGE_TYPE, "destination-path", destination_path,
+      NULL);
 }
 
 /**
@@ -656,6 +680,17 @@ shp_message_get_source_path (ShpMessage * msg)
   priv = msg->priv;
 
   return priv->source_path;
+}
+
+const char*
+shp_message_get_destination_path (ShpMessage * msg)
+{
+  ShpMessagePrivate *priv;
+  g_return_val_if_fail (IS_SHP_MESSAGE (msg), NULL);
+
+  priv = msg->priv;
+
+  return priv->destination_path;
 }
 
 static void

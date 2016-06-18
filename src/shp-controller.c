@@ -151,7 +151,7 @@ shp_controller_start (ShpComponent * component)
   }
 
   priv->handler = shp_bus_add_async_handler (bus, message_handler,
-      g_object_ref (component), g_object_unref, NULL);
+      g_object_ref (component), g_object_unref, NULL, NULL);
   g_object_unref (bus);
 
   return TRUE;
