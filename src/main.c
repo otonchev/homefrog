@@ -72,8 +72,12 @@ main (int argc, char *argv[])
     ShpRule *rule;
     ShpMessage *event;
     ShpCondition *condition;
+    ShpPlugin *timer;
     ShpPlugin *temperature;
     ShpPlugin *telldus;
+
+    /* load timer */
+    timer = shp_plugin_factory_create ("timer", "/clock/timer");
 
     /* load ds1820digitemp plugin for obtaining temperature readings */
     temperature = shp_plugin_factory_create ("ds1820digitemp",
@@ -93,6 +97,7 @@ main (int argc, char *argv[])
     group = shp_group_new (bus);
     controller = shp_controller_new ();
     shp_group_add (group, SHP_COMPONENT (controller));
+    shp_group_add (group, SHP_COMPONENT (timer));
     shp_group_add (group, SHP_COMPONENT (temperature));
     shp_group_add (group, SHP_COMPONENT (telldus));
 

@@ -82,8 +82,10 @@ guint shp_message_size (ShpMessage * msg);
 
 void shp_message_foreach (ShpMessage * msg, ShpMessageFunc func, gpointer user_data);
 
-const char *shp_message_get_name (ShpMessage * msg);
-const char *shp_message_get_source_path (ShpMessage * msg);
+const gchar* shp_message_get_name (ShpMessage * msg);
+const gchar* shp_message_get_source_path (ShpMessage * msg);
+
+gchar* shp_message_to_string (ShpMessage * msg);
 
 GType shp_message_get_type (void);
 

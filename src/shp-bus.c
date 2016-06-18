@@ -221,11 +221,14 @@ gboolean
 shp_bus_post (ShpBus *bus, ShpMessage *message)
 {
   ShpBusPrivate *priv;
+  gchar *msg_str;
 
   g_return_val_if_fail (IS_SHP_BUS (bus), FALSE);
   g_return_val_if_fail (IS_SHP_MESSAGE (message), FALSE);
 
-  g_debug ("posted message: %s", shp_message_get_name (message));
+  msg_str = shp_message_to_string (message);
+  g_debug ("posted message: %s", msg_str);
+  g_free (msg_str);
 
   priv = bus->priv;
 

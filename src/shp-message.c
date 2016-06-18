@@ -657,3 +657,48 @@ shp_message_get_source_path (ShpMessage * msg)
 
   return priv->source_path;
 }
+
+static void
+print_pair (gpointer key, gpointer val, gpointer user_data)
+{
+  const gchar *name = key;
+  const _ShpValue  *value = val;
+  GString *str = user_data;
+
+  switch (G_VALUE_TYPE (&value->value)) {
+    case G_TYPE_STRING:
+      g_string_append_printf (str, " '%s':'%s'", name,
+          g_value_get_string (&value->value));
+      break;
+    case G_TYPE_INT:
+      g_string_append_printf (str, " '%s':'%d'", name,
+          g_value_get_int (&value->value));
+      break;
+    case G_TYPE_DOUBLE:
+      g_string_append_printf (str, " '%s':'%f'", name,
+          g_value_get_double (&value->value));
+      break;
+    case G_TYPE_LONG:
+      g_string_append_printf (str, " '%s':'%ld'", name,
+          g_value_get_long (&value->value));
+      break;
+    default:
+      g_assert_not_reached ();
+      break;
+  }
+}
+
+gchar*
+shp_message_to_string (ShpMessage * msg)
+{
+  GString *str;
+  ShpMessagePrivate *priv;
+  g_return_val_if_fail (IS_SHP_MESSAGE (msg), NULL);
+
+  priv = msg->priv;
+
+  str = g_string_new (priv->source_path);
+
+  g_hash_table_foreach (priv->values, print_pair, str);
+  return g_string_free (str, FALSE);
+}

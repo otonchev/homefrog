@@ -115,7 +115,7 @@ send_status (ShpTimer * self)
   shp_message_add_integer (msg, "year", tm_struct->tm_year + 1900);
   shp_message_add_integer (msg, "month", tm_struct->tm_mon + 1);
   shp_message_add_integer (msg, "day", tm_struct->tm_mday);
-  shp_message_add_integer (msg, "week_day", tm_struct->tm_wday + 1);
+  shp_message_add_integer (msg, "week_day", tm_struct->tm_wday);
 
   if (!shp_component_post_message (component, msg)) {
     g_warning ("timer: could not post message on bus");
