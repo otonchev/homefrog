@@ -28,7 +28,7 @@
 #include "shp-group.h"
 #include "shp-plugin.h"
 
-G_DEFINE_TYPE (ShpGroup, shp_group, G_TYPE_OBJECT);
+G_DEFINE_TYPE (ShpGroup, shp_group, SHP_COMPONENT_TYPE);
 
 struct _ShpGroupPrivate {
   GSList *components;
@@ -59,6 +59,10 @@ static void
 shp_group_init (ShpGroup * self)
 {
   ShpGroupPrivate *priv;
+
+  self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self,
+                                            SHP_GROUP_TYPE,
+                                            ShpGroupPrivate);
 
   priv = self->priv;
 
@@ -190,6 +194,8 @@ shp_group_add (ShpGroup * group, ShpComponent * component)
   g_debug ("adding component to group");
 
   priv = SHP_GROUP (group)->priv;
+
+  shp_component_set_parent (component, SHP_COMPONENT (group));
 
   g_mutex_lock (&priv->mutex);
   priv->components = g_slist_append (priv->components, component);

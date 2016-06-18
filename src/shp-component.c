@@ -64,6 +64,10 @@ shp_component_class_init (ShpComponentClass * klass)
 
   gobject_class = G_OBJECT_CLASS (klass);
 
+  gobject_class->finalize = shp_component_finalize;
+  gobject_class->set_property = shp_component_set_property;
+  gobject_class->get_property = shp_component_get_property;
+
   g_object_class_install_property (gobject_class, PROP_BUS,
       g_param_spec_object ("bus", "The Bus",
           "Event Bus used by components for exchanging messages",
@@ -78,10 +82,6 @@ shp_component_class_init (ShpComponentClass * klass)
       g_param_spec_string ("path", "Component path",
           "Path to the component", DEFAULT_PATH,
           G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
-
-  gobject_class->finalize = shp_component_finalize;
-  gobject_class->set_property = shp_component_set_property;
-  gobject_class->get_property = shp_component_get_property;
 }
 
 static void
@@ -231,7 +231,7 @@ shp_component_start (ShpComponent * component)
     return FALSE;
 
   if (priv->bus)
-    shp_bus_stop (priv->bus);
+    shp_bus_start (priv->bus);
 
   res = klass->start (component);
   priv->started = (res == TRUE);

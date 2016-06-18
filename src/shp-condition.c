@@ -289,17 +289,21 @@ check_event (ShpCondition * condition, const ShpMessage * event)
           option->value_name, &event_value_double)) {
         result = FALSE;
       } else {
+
+        g_debug ("condition: double, option value: %f, event value %f",
+            option_value_double, event_value_double);
+
         switch (option->op) {
           case SHP_CONDITION_OPERATOR_EQ:
             if (option_value_double != event_value_double)
               result = FALSE;
             break;
           case SHP_CONDITION_OPERATOR_GT:
-            if (option_value_double < event_value_double)
+            if (option_value_double > event_value_double)
               result = FALSE;
             break;
           case SHP_CONDITION_OPERATOR_LT:
-            if (option_value_double > event_value_double)
+            if (option_value_double < event_value_double)
               result = FALSE;
             break;
           default:
@@ -307,6 +311,8 @@ check_event (ShpCondition * condition, const ShpMessage * event)
             result = FALSE;
             break;
         };
+
+        g_debug ("condition: result: %d", result);
       }
     } else if (option->value_type == G_TYPE_INT) {
       gint event_value_int;
@@ -323,11 +329,11 @@ check_event (ShpCondition * condition, const ShpMessage * event)
               result = FALSE;
             break;
           case SHP_CONDITION_OPERATOR_GT:
-            if (option_value_int < event_value_int)
+            if (option_value_int > event_value_int)
               result = FALSE;
             break;
           case SHP_CONDITION_OPERATOR_LT:
-            if (option_value_int > event_value_int)
+            if (option_value_int < event_value_int)
               result = FALSE;
             break;
           default:

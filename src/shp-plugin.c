@@ -58,26 +58,27 @@ shp_plugin_class_init (ShpPluginClass * klass)
   GObjectClass *gobject_class;
 
   gobject_class = G_OBJECT_CLASS (klass);
-
+/*
   g_type_class_add_private (klass, sizeof (ShpPluginPrivate));
-
+*/
   gobject_class->finalize = shp_plugin_finalize;
   gobject_class->set_property = shp_plugin_set_property;
   gobject_class->get_property = shp_plugin_get_property;
 
-  shp_plugin_signals[SIGNAL_STATUS_UPDATE] =
-      g_signal_new ("status-update", G_TYPE_FROM_CLASS (klass),
-      G_SIGNAL_RUN_LAST,
+  shp_plugin_signals[SIGNAL_STATUS_UPDATE] = g_signal_new ("status-update",
+      G_TYPE_FROM_CLASS (klass), G_SIGNAL_RUN_LAST,
       G_STRUCT_OFFSET (ShpPluginClass, status_update), NULL, NULL,
-      g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 1, G_TYPE_NONE);
+      g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
 }
 
 static void
 shp_plugin_init (ShpPlugin * self)
 {
+/*
   self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self,
                                             SHP_PLUGIN_TYPE,
                                             ShpPluginPrivate);
+*/
 }
 
 static void

@@ -58,13 +58,14 @@ in the room:
     /* load ds1820digitemp plugin for obtaining temperature readings */
     temperature = shp_plugin_factory_create ("ds1820digitemp",
         "/home/floor1/LivingRoom/Temperature");
-    g_object_set (G_OBJECT (temperature), "config-dir", "/home/pi/digitemp/");
-    g_object_set (G_OBJECT (temperature), "device-id", "2");
+    g_object_set (G_OBJECT (temperature), "config-dir", "/home/pi/digitemp/",
+        NULL);
+    g_object_set (G_OBJECT (temperature), "device-id", "2", NULL);
 
     /* load telldus plugin for controlling heater */
     telldus = shp_plugin_factory_create ("telldus",
         "/home/floor1/LivingRoom/Heater");
-    g_object_set (G_OBJECT (telldus), "device-id", "1");
+    g_object_set (G_OBJECT (telldus), "device-id", "1", NULL);
 
     /* create the group and add the event bus, the controller and the plugins to
      * it */

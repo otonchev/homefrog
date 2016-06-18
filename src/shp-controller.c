@@ -27,7 +27,7 @@
 
 #include "shp-controller.h"
 
-G_DEFINE_TYPE (ShpController, shp_controller, G_TYPE_OBJECT);
+G_DEFINE_TYPE (ShpController, shp_controller, SHP_COMPONENT_TYPE);
 
 struct _ShpControllerPrivate {
   GSList *rules;
@@ -58,6 +58,10 @@ static void
 shp_controller_init (ShpController * self)
 {
   ShpControllerPrivate *priv;
+
+  self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self,
+                                            SHP_CONTROLLER_TYPE,
+                                            ShpControllerPrivate);
 
   priv = self->priv;
 

@@ -37,7 +37,7 @@ shp_CFLAGS = \
 	$(GIOUNIX_CFLAGS) \
 	$(GOBJECT_CFLAGS) \
 	$(GMODULE_CFLAGS) \
-	-Werror -Wunused -Wall
+	-Werror -Wunused -Wall -g
 shp_LDADD = \
 	$(GLIB_LIBS) \
 	$(GIOUNIX_LIBS) \

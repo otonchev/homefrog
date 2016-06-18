@@ -80,6 +80,7 @@ shp_telldus_init (ShpTelldus * self)
 {
   g_signal_connect (G_OBJECT (self), "status-update",
       G_CALLBACK (status_update), NULL);
+  self->device_id = DEFAULT_DEVICE_ID;
 }
 
 static void
@@ -106,6 +107,7 @@ shp_telldus_set_property (GObject * object, guint propid,
   switch (propid) {
     case PROP_DEVICE_ID:
       self->device_id = g_value_get_int (value);
+      g_debug ("telldus: setting device id: %d", self->device_id);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, propid, pspec);
@@ -131,6 +133,13 @@ static void
 status_update (ShpPlugin * plugin)
 {
   gint status;
+
+  g_debug ("telldus: reqest for signalling status");
+
+  if (SHP_TELLDUS (plugin)->device_id == UNKNOWN_DEVICE_ID) {
+    g_warning ("telldus: incomplete configuration, missing 'device-id'");
+    return;
+  }
 
   status = get_status (SHP_TELLDUS (plugin));
   if (status == -1) {

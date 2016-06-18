@@ -31,6 +31,7 @@
 int
 main (int argc, char *argv[])
 {
+  GMainLoop *loop;
   GKeyFile *file;
   gchar *plugin_dir;
   gchar *file_name;
@@ -77,13 +78,14 @@ main (int argc, char *argv[])
     /* load ds1820digitemp plugin for obtaining temperature readings */
     temperature = shp_plugin_factory_create ("ds1820digitemp",
         "/home/floor1/LivingRoom/Temperature");
-    g_object_set (G_OBJECT (temperature), "config-dir", "/home/pi/digitemp/");
-    g_object_set (G_OBJECT (temperature), "device-id", "2");
+    g_object_set (G_OBJECT (temperature), "config-dir", "/home/pi/digitemp/",
+        NULL);
+    g_object_set (G_OBJECT (temperature), "device-id", "2", NULL);
 
     /* load telldus plugin for controlling heater */
     telldus = shp_plugin_factory_create ("telldus",
         "/home/floor1/LivingRoom/Heater");
-    g_object_set (G_OBJECT (telldus), "device-id", "1");
+    g_object_set (G_OBJECT (telldus), "device-id", 1, NULL);
 
     /* create the group and add the event bus, the controller and the plugins to
      * it */
@@ -117,6 +119,10 @@ main (int argc, char *argv[])
     shp_component_start (SHP_COMPONENT (group));
   }
 #endif
+
+  /* create and run the main loop */
+  loop = g_main_loop_new (NULL, TRUE);
+  g_main_loop_run (loop);
 
   return 0;
 }

@@ -200,6 +200,8 @@ shp_rule_process_event (ShpRule * rule, ShpMessage * event)
     return FALSE;
   }
 
+  g_debug ("rule: processing event from path: %s", path);
+
   if (!shp_condition_process_event (condition, event))
     return FALSE;
 
