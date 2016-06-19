@@ -15,6 +15,7 @@ BUILT_SOURCES = $(GENERATED_C) $(GENERATED_H)
 homefrog_SOURCES = \
 	main.c \
 	shp-bus.c \
+	shp-complextype-factory.c \
 	shp-component.c \
 	shp-controller.c \
 	shp-condition.c \
@@ -25,9 +26,9 @@ homefrog_SOURCES = \
 	shp-rule.c \
 	shp-scene.c \
 	shp-slave-plugin.c \
-	shp-structure.c \
-	shp-structure-compare.c \
-	shp-timer-structure.c
+	shp-complextype.c \
+	shp-complextype-compare.c \
+	shp-timer-complextype.c
 
 nodist_shp_SOURCES = $(GENERATED_C)
 noinst_HEADERS = $(GENERATED_H)

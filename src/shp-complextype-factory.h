@@ -15,23 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "shp-structure-compare.h"
+#include <glib.h>
+#include <glib-object.h>
 
-G_DEFINE_INTERFACE (ShpStructureCompare, shp_structure_compare, G_TYPE_OBJECT);
+#include "shp-complextype.h"
 
-ShpStructureCompareResult
-shp_structure_compare_compare (ShpStructureCompare * data1,
-    ShpStructureCompare * data2)
-{
-  g_return_val_if_fail (IS_SHP_STRUCTURE_COMPARE (data1),
-      SHP_STRUCTURE_COMPARE_FAIL);
-  g_return_val_if_fail (IS_SHP_STRUCTURE_COMPARE (data2),
-      SHP_STRUCTURE_COMPARE_FAIL);
+#ifndef __SHP_COMPLEXTYPE_FACTORY_H__
+#define __SHP_COMPLEXTYPE_FACTORY_H__
 
-  return SHP_STRUCTURE_COMPARE_GET_INTERFACE (data1)->compare (data1, data2);
-}
+ShpComplextype * shp_complextype_factory_create (gchar * name, gchar * path);
+gboolean shp_complextype_factory_register (gchar * name, GType object_type);
+gchar** shp_complextype_factory_get_complextype_list ();
+gboolean shp_complextype_factory_setup (const gchar * complextype_dir);
+void shp_complextype_factory_cleanup ();
 
-static void
-shp_structure_compare_default_init (ShpStructureCompareInterface *structure_compare)
-{
-}
+#endif /* __SHP_COMPLEXTYPE_FACTORY_H__ */

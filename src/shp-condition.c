@@ -25,8 +25,8 @@
 #include <glib.h>
 
 #include "shp-condition.h"
-#include "shp-structure.h"
-#include "shp-structure-compare.h"
+#include "shp-complextype.h"
+#include "shp-complextype-compare.h"
 
 G_DEFINE_TYPE (ShpCondition, shp_condition, G_TYPE_OBJECT);
 
@@ -201,8 +201,8 @@ shp_condition_add_string_option (ShpCondition * condition,
 }
 
 void
-shp_condition_add_structure_option (ShpCondition * condition,
-    const gchar * value_name, ShpStructure * value, ShpConditionOperator op)
+shp_condition_add_complextype_option (ShpCondition * condition,
+    const gchar * value_name, ShpComplextype * value, ShpConditionOperator op)
 {
   ShpConditionPrivate *priv;
   _Option *option;
@@ -212,8 +212,8 @@ shp_condition_add_structure_option (ShpCondition * condition,
 
   priv = condition->priv;
 
-  option = option_new (SHP_STRUCTURE_TYPE, value_name, op);
-  g_value_init (&option->value, SHP_STRUCTURE_TYPE);
+  option = option_new (SHP_COMPLEXTYPE_TYPE, value_name, op);
+  g_value_init (&option->value, SHP_COMPLEXTYPE_TYPE);
   g_value_set_object (&option->value, value);
 
   priv->options = g_slist_append (priv->options, option);
@@ -342,28 +342,28 @@ check_event (ShpCondition * condition, const ShpMessage * event)
             break;
         };
       }
-    } else if (option->value_type == SHP_STRUCTURE_TYPE) {
-      const ShpStructure *event_value_struct;
-      const ShpStructure *option_value_struct;
-      ShpStructureCompareResult cmp_result;
+    } else if (option->value_type == SHP_COMPLEXTYPE_TYPE) {
+      const ShpComplextype *event_value_struct;
+      const ShpComplextype *option_value_struct;
+      ShpComplextypeCompareResult cmp_result;
 
       option_value_struct = g_value_get_object (&option->value);
-      event_value_struct = shp_message_get_structure ((ShpMessage *) event,
+      event_value_struct = shp_message_get_complextype ((ShpMessage *) event,
           option->value_name);
       cmp_result =
-          shp_structure_compare_compare (SHP_STRUCTURE_COMPARE (option_value_struct),
-          SHP_STRUCTURE_COMPARE (event_value_struct));
+          shp_complextype_compare_compare (SHP_COMPLEXTYPE_COMPARE (option_value_struct),
+          SHP_COMPLEXTYPE_COMPARE (event_value_struct));
       switch (option->op) {
         case SHP_CONDITION_OPERATOR_EQ:
-          if (cmp_result != SHP_STRUCTURE_COMPARE_EQ)
+          if (cmp_result != SHP_COMPLEXTYPE_COMPARE_EQ)
             result = FALSE;
           break;
         case SHP_CONDITION_OPERATOR_GT:
-          if (cmp_result != SHP_STRUCTURE_COMPARE_GT)
+          if (cmp_result != SHP_COMPLEXTYPE_COMPARE_GT)
             result = FALSE;
           break;
         case SHP_CONDITION_OPERATOR_LT:
-          if (cmp_result != SHP_STRUCTURE_COMPARE_LT)
+          if (cmp_result != SHP_COMPLEXTYPE_COMPARE_LT)
             result = FALSE;
           break;
         default:

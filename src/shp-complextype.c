@@ -17,27 +17,27 @@
  */
 
 /*
- * ShpStructure is the basic unit of passing data from plugins.
+ * ShpComplextype — complextype containing a set of other types.
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <glib.h>
 
-#include "shp-structure.h"
+#include "shp-complextype.h"
 
-G_DEFINE_TYPE (ShpStructure, shp_structure, G_TYPE_OBJECT);
+G_DEFINE_TYPE (ShpComplextype, shp_complextype, G_TYPE_OBJECT);
 
-struct _ShpStructurePrivate {
+struct _ShpComplextypePrivate {
   GHashTable *values;
   gchar *name;
   gchar *source_path;
 };
 
-static void shp_structure_finalize (GObject * object);
-static void shp_structure_get_property (GObject * object, guint propid,
+static void shp_complextype_finalize (GObject * object);
+static void shp_complextype_get_property (GObject * object, guint propid,
     GValue * value, GParamSpec * pspec);
-static void shp_structure_set_property (GObject * object, guint propid,
+static void shp_complextype_set_property (GObject * object, guint propid,
     const GValue * value, GParamSpec * pspec);
 
 typedef struct {
@@ -45,27 +45,27 @@ typedef struct {
 } _ShpValue;
 
 static void
-shp_structure_class_init (ShpStructureClass * klass)
+shp_complextype_class_init (ShpComplextypeClass * klass)
 {
   GObjectClass *gobject_class;
 
   gobject_class = G_OBJECT_CLASS (klass);
 
-  g_type_class_add_private (klass, sizeof (ShpStructurePrivate));
+  g_type_class_add_private (klass, sizeof (ShpComplextypePrivate));
 
-  gobject_class->finalize = shp_structure_finalize;
-  gobject_class->set_property = shp_structure_set_property;
-  gobject_class->get_property = shp_structure_get_property;
+  gobject_class->finalize = shp_complextype_finalize;
+  gobject_class->set_property = shp_complextype_set_property;
+  gobject_class->get_property = shp_complextype_get_property;
 }
 
 static void
-shp_structure_get_property (GObject * object, guint propid, GValue * value,
+shp_complextype_get_property (GObject * object, guint propid, GValue * value,
     GParamSpec * pspec)
 {
-  ShpStructurePrivate *priv;
-  ShpStructure *structure = SHP_STRUCTURE (object);
+  ShpComplextypePrivate *priv;
+  ShpComplextype *complextype = SHP_COMPLEXTYPE (object);
 
-  priv = structure->priv;
+  priv = complextype->priv;
   if (priv);
 
   switch (propid) {
@@ -75,13 +75,13 @@ shp_structure_get_property (GObject * object, guint propid, GValue * value,
 }
 
 static void
-shp_structure_set_property (GObject * object, guint propid, const GValue * value,
+shp_complextype_set_property (GObject * object, guint propid, const GValue * value,
     GParamSpec * pspec)
 {
-  ShpStructurePrivate *priv;
-  ShpStructure *structure = SHP_STRUCTURE (object);
+  ShpComplextypePrivate *priv;
+  ShpComplextype *complextype = SHP_COMPLEXTYPE (object);
 
-  priv = structure->priv;
+  priv = complextype->priv;
   if (priv);
 
   switch (propid) {
@@ -99,13 +99,13 @@ free_value_cb (gpointer data)
 }
 
 static void
-shp_structure_init (ShpStructure * self)
+shp_complextype_init (ShpComplextype * self)
 {
-  ShpStructurePrivate *priv;
+  ShpComplextypePrivate *priv;
 
   self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self,
-                                            SHP_STRUCTURE_TYPE,
-                                            ShpStructurePrivate);
+                                            SHP_COMPLEXTYPE_TYPE,
+                                            ShpComplextypePrivate);
 
   priv = self->priv;
 
@@ -114,10 +114,10 @@ shp_structure_init (ShpStructure * self)
 }
 
 static void
-shp_structure_finalize (GObject * object)
+shp_complextype_finalize (GObject * object)
 {
-  ShpStructurePrivate *priv;
-  ShpStructure *self = SHP_STRUCTURE (object);
+  ShpComplextypePrivate *priv;
+  ShpComplextype *self = SHP_COMPLEXTYPE (object);
 
   priv = self->priv;
 
@@ -130,34 +130,34 @@ shp_structure_finalize (GObject * object)
 }
 
 /**
- * shp_structure_new:
+ * shp_complextype_new:
  *
- * Creates a new instance of #ShpStructure. Free with g_object_unref()
+ * Creates a new instance of #ShpComplextype. Free with g_object_unref()
  * when no-longer needed.
  *
- * Returns: a new instance of #ShpStructure
+ * Returns: a new instance of #ShpComplextype
  */
-ShpStructure*
-shp_structure_new ()
+ShpComplextype*
+shp_complextype_new ()
 {
-  return g_object_new (SHP_STRUCTURE_TYPE, NULL);
+  return g_object_new (SHP_COMPLEXTYPE_TYPE, NULL);
 }
 
 /**
- * shp_structure_add_string:
- * @msg: a #ShpStructure
+ * shp_complextype_add_string:
+ * @msg: a #ShpComplextype
  * @name: data's field name
  * @val: value
  *
- * Add a new key-value pair to a #ShpStructure, value is of type string
+ * Add a new key-value pair to a #ShpComplextype, value is of type string
  */
 void
-shp_structure_add_string (ShpStructure * msg, const gchar * name,
+shp_complextype_add_string (ShpComplextype * msg, const gchar * name,
     const gchar * val)
 {
-  ShpStructurePrivate *priv;
+  ShpComplextypePrivate *priv;
 
-  g_return_if_fail (IS_SHP_STRUCTURE (msg));
+  g_return_if_fail (IS_SHP_COMPLEXTYPE (msg));
   g_return_if_fail (name != NULL);
 
   priv = msg->priv;
@@ -169,19 +169,19 @@ shp_structure_add_string (ShpStructure * msg, const gchar * name,
 }
 
 /**
- * shp_structure_add_integer:
- * @msg: a #ShpStructure
+ * shp_complextype_add_integer:
+ * @msg: a #ShpComplextype
  * @name: data's field name
  * @val: value
  *
- * Add a new key-value pair to a #ShpStructure, value is of type integer
+ * Add a new key-value pair to a #ShpComplextype, value is of type integer
  */
 void
-shp_structure_add_integer (ShpStructure * msg, const gchar * name, gint val)
+shp_complextype_add_integer (ShpComplextype * msg, const gchar * name, gint val)
 {
-  ShpStructurePrivate *priv;
+  ShpComplextypePrivate *priv;
 
-  g_return_if_fail (IS_SHP_STRUCTURE (msg));
+  g_return_if_fail (IS_SHP_COMPLEXTYPE (msg));
   g_return_if_fail (name != NULL);
 
   priv = msg->priv;
@@ -193,19 +193,19 @@ shp_structure_add_integer (ShpStructure * msg, const gchar * name, gint val)
 }
 
 /**
- * shp_structure_add_double:
- * @msg: a #ShpStructure
+ * shp_complextype_add_double:
+ * @msg: a #ShpComplextype
  * @name: data's field name
  * @val: value
  *
- * Add a new key-value pair to a #ShpStructure, value is of type double
+ * Add a new key-value pair to a #ShpComplextype, value is of type double
  */
 void
-shp_structure_add_double (ShpStructure * msg, const gchar * name, gdouble val)
+shp_complextype_add_double (ShpComplextype * msg, const gchar * name, gdouble val)
 {
-  ShpStructurePrivate *priv;
+  ShpComplextypePrivate *priv;
 
-  g_return_if_fail (IS_SHP_STRUCTURE (msg));
+  g_return_if_fail (IS_SHP_COMPLEXTYPE (msg));
   g_return_if_fail (name != NULL);
 
   priv = msg->priv;
@@ -217,19 +217,19 @@ shp_structure_add_double (ShpStructure * msg, const gchar * name, gdouble val)
 }
 
 /**
- * shp_structure_add_boolean:
- * @msg: a #ShpStructure
+ * shp_complextype_add_boolean:
+ * @msg: a #ShpComplextype
  * @name: data's field name
  * @val: value
  *
- * Add a new key-value pair to a #ShpStructure, value is of type boolean
+ * Add a new key-value pair to a #ShpComplextype, value is of type boolean
  */
 void
-shp_structure_add_boolean (ShpStructure * msg, const gchar * name, gboolean val)
+shp_complextype_add_boolean (ShpComplextype * msg, const gchar * name, gboolean val)
 {
-  ShpStructurePrivate *priv;
+  ShpComplextypePrivate *priv;
 
-  g_return_if_fail (IS_SHP_STRUCTURE (msg));
+  g_return_if_fail (IS_SHP_COMPLEXTYPE (msg));
   g_return_if_fail (name != NULL);
 
   priv = msg->priv;
@@ -241,19 +241,19 @@ shp_structure_add_boolean (ShpStructure * msg, const gchar * name, gboolean val)
 }
 
 /**
- * shp_structure_add_long:
- * @msg: a #ShpStructure
+ * shp_complextype_add_long:
+ * @msg: a #ShpComplextype
  * @name: data's field name
  * @val: value
  *
- * Add a new key-value pair to a #ShpStructure, value is of type long
+ * Add a new key-value pair to a #ShpComplextype, value is of type long
  */
 void
-shp_structure_add_long (ShpStructure * msg, const gchar * name, glong val)
+shp_complextype_add_long (ShpComplextype * msg, const gchar * name, glong val)
 {
-  ShpStructurePrivate *priv;
+  ShpComplextypePrivate *priv;
 
-  g_return_if_fail (IS_SHP_STRUCTURE (msg));
+  g_return_if_fail (IS_SHP_COMPLEXTYPE (msg));
   g_return_if_fail (name != NULL);
 
   priv = msg->priv;
@@ -265,24 +265,24 @@ shp_structure_add_long (ShpStructure * msg, const gchar * name, glong val)
 }
 
 /**
- * shp_structure_has value:
- * @msg: a #ShpStructure
+ * shp_complextype_has value:
+ * @msg: a #ShpComplextype
  * @name: data's field name
  * @type: msg type
  *
  * Check whether there is a field with name @name and of type @type in the
  * data. This function is normally called before calling any of the
- * shp_structure_get_*() set of functions.
+ * shp_complextype_get_*() set of functions.
  *
  * Returns: TRUE if such a field exists and FALSE otherwise
  */
 gboolean
-shp_structure_has_value (ShpStructure * msg, const gchar * name, GType type)
+shp_complextype_has_value (ShpComplextype * msg, const gchar * name, GType type)
 {
-  ShpStructurePrivate *priv;
+  ShpComplextypePrivate *priv;
   _ShpValue *value;
 
-  g_return_val_if_fail (IS_SHP_STRUCTURE (msg), FALSE);
+  g_return_val_if_fail (IS_SHP_COMPLEXTYPE (msg), FALSE);
   g_return_val_if_fail (name != NULL, FALSE);
   g_return_val_if_fail (G_TYPE_IS_FUNDAMENTAL (type), FALSE);
 
@@ -299,8 +299,8 @@ shp_structure_has_value (ShpStructure * msg, const gchar * name, GType type)
 }
 
 /**
- * shp_structure_get_string:
- * @msg: a #ShpStructure
+ * shp_complextype_get_string:
+ * @msg: a #ShpComplextype
  * @name: data's field name
  *
  * Returns the value of type string corresponding to @name
@@ -308,13 +308,13 @@ shp_structure_has_value (ShpStructure * msg, const gchar * name, GType type)
  * Returns: a value of type string
  */
 const gchar*
-shp_structure_get_string (ShpStructure * msg, const gchar * name)
+shp_complextype_get_string (ShpComplextype * msg, const gchar * name)
 {
-  ShpStructurePrivate *priv;
+  ShpComplextypePrivate *priv;
   _ShpValue *value;
   const gchar *ret;
 
-  g_return_val_if_fail (IS_SHP_STRUCTURE (msg), NULL);
+  g_return_val_if_fail (IS_SHP_COMPLEXTYPE (msg), NULL);
   g_return_val_if_fail (name != NULL, NULL);
 
   priv = msg->priv;
@@ -334,8 +334,8 @@ shp_structure_get_string (ShpStructure * msg, const gchar * name)
 }
 
 /**
- * shp_structure_get_integer:
- * @msg: a #ShpStructure
+ * shp_complextype_get_integer:
+ * @msg: a #ShpComplextype
  * @name: data's field name
  *
  * Returns the value of type integer corresponding to @name
@@ -343,12 +343,12 @@ shp_structure_get_string (ShpStructure * msg, const gchar * name)
  * Returns: a value of type integer
  */
 gboolean
-shp_structure_get_integer (ShpStructure * msg, const gchar * name, gint * result)
+shp_complextype_get_integer (ShpComplextype * msg, const gchar * name, gint * result)
 {
-  ShpStructurePrivate *priv;
+  ShpComplextypePrivate *priv;
   _ShpValue *value;
 
-  g_return_val_if_fail (IS_SHP_STRUCTURE (msg), FALSE);
+  g_return_val_if_fail (IS_SHP_COMPLEXTYPE (msg), FALSE);
   g_return_val_if_fail (name != NULL, FALSE);
   g_return_val_if_fail (result != NULL, FALSE);
 
@@ -369,8 +369,8 @@ shp_structure_get_integer (ShpStructure * msg, const gchar * name, gint * result
 }
 
 /**
- * shp_structure_get_double:
- * @msg: a #ShpStructure
+ * shp_complextype_get_double:
+ * @msg: a #ShpComplextype
  * @name: data's field name
  *
  * Returns the value of type double corresponding to @name
@@ -378,12 +378,12 @@ shp_structure_get_integer (ShpStructure * msg, const gchar * name, gint * result
  * Returns: a value of type double
  */
 gboolean
-shp_structure_get_double (ShpStructure * msg, const gchar * name, gdouble * result)
+shp_complextype_get_double (ShpComplextype * msg, const gchar * name, gdouble * result)
 {
-  ShpStructurePrivate *priv;
+  ShpComplextypePrivate *priv;
   _ShpValue *value;
 
-  g_return_val_if_fail (IS_SHP_STRUCTURE (msg), FALSE);
+  g_return_val_if_fail (IS_SHP_COMPLEXTYPE (msg), FALSE);
   g_return_val_if_fail (name != NULL, FALSE);
   g_return_val_if_fail (result != NULL, FALSE);
 
@@ -404,8 +404,8 @@ shp_structure_get_double (ShpStructure * msg, const gchar * name, gdouble * resu
 }
 
 /**
- * shp_structure_get_boolean:
- * @msg: a #ShpStructure
+ * shp_complextype_get_boolean:
+ * @msg: a #ShpComplextype
  * @name: data's field name
  *
  * Returns the value of type boolean corresponding to @name
@@ -413,13 +413,13 @@ shp_structure_get_double (ShpStructure * msg, const gchar * name, gdouble * resu
  * Returns: a value of type boolean
  */
 gboolean
-shp_structure_get_boolean (ShpStructure * msg, const gchar * name,
+shp_complextype_get_boolean (ShpComplextype * msg, const gchar * name,
     gboolean * result)
 {
-  ShpStructurePrivate *priv;
+  ShpComplextypePrivate *priv;
   _ShpValue *value;
 
-  g_return_val_if_fail (IS_SHP_STRUCTURE (msg), FALSE);
+  g_return_val_if_fail (IS_SHP_COMPLEXTYPE (msg), FALSE);
   g_return_val_if_fail (name != NULL, FALSE);
   g_return_val_if_fail (result != NULL, FALSE);
 
@@ -440,8 +440,8 @@ shp_structure_get_boolean (ShpStructure * msg, const gchar * name,
 }
 
 /**
- * shp_structure_get_long:
- * @msg: a #ShpStructure
+ * shp_complextype_get_long:
+ * @msg: a #ShpComplextype
  * @name: data's field name
  *
  * Returns the value of type long corresponding to @name
@@ -449,12 +449,12 @@ shp_structure_get_boolean (ShpStructure * msg, const gchar * name,
  * Returns: a value of type long
  */
 gboolean
-shp_structure_get_long (ShpStructure * msg, const gchar * name, glong * result)
+shp_complextype_get_long (ShpComplextype * msg, const gchar * name, glong * result)
 {
-  ShpStructurePrivate *priv;
+  ShpComplextypePrivate *priv;
   _ShpValue *value;
 
-  g_return_val_if_fail (IS_SHP_STRUCTURE (msg), FALSE);
+  g_return_val_if_fail (IS_SHP_COMPLEXTYPE (msg), FALSE);
   g_return_val_if_fail (name != NULL, FALSE);
   g_return_val_if_fail (result != NULL, FALSE);
 
@@ -475,7 +475,7 @@ shp_structure_get_long (ShpStructure * msg, const gchar * name, glong * result)
 }
 
 typedef struct {
-  ShpStructureFunc func;
+  ShpComplextypeFunc func;
   gpointer user_data;
 } _ShpFuncData;
 
@@ -484,7 +484,7 @@ foreach_cb (gpointer key, gpointer val, gpointer data)
 {
   _ShpFuncData *func_data = data;
 
-  ShpStructureFunc func = func_data->func;
+  ShpComplextypeFunc func = func_data->func;
   const gchar *name = key;
   const _ShpValue  *value = val;
 
@@ -492,19 +492,19 @@ foreach_cb (gpointer key, gpointer val, gpointer data)
 }
 
 /**
- * shp_structure_size:
- * @msg: a #ShpStructure
+ * shp_complextype_size:
+ * @msg: a #ShpComplextype
  *
  * Returns number of parameters in @msg
  *
  * Returns: number of parameters in @msg
  */
 guint
-shp_structure_size (ShpStructure * msg)
+shp_complextype_size (ShpComplextype * msg)
 {
-  ShpStructurePrivate *priv;
+  ShpComplextypePrivate *priv;
 
-  g_return_if_fail (IS_SHP_STRUCTURE (msg));
+  g_return_if_fail (IS_SHP_COMPLEXTYPE (msg));
 
   priv = msg->priv;
 
@@ -512,21 +512,21 @@ shp_structure_size (ShpStructure * msg)
 }
 
 /**
- * shp_structure_foreach:
- * @msg: a #ShpStructure
- * @func: a #ShpStructureFunc to be called
+ * shp_complextype_foreach:
+ * @msg: a #ShpComplextype
+ * @func: a #ShpComplextypeFunc to be called
  * @user_data: user data to be submitted when calling @func
  *
  * Calls @func for each parameter in @msg
  */
 void
-shp_structure_foreach (ShpStructure * msg, ShpStructureFunc func,
+shp_complextype_foreach (ShpComplextype * msg, ShpComplextypeFunc func,
     gpointer user_data)
 {
-  ShpStructurePrivate *priv;
+  ShpComplextypePrivate *priv;
   _ShpFuncData *func_data;
 
-  g_return_if_fail (IS_SHP_STRUCTURE (msg));
+  g_return_if_fail (IS_SHP_COMPLEXTYPE (msg));
   g_return_if_fail (func != NULL);
 
   priv = msg->priv;
@@ -541,12 +541,12 @@ shp_structure_foreach (ShpStructure * msg, ShpStructureFunc func,
 }
 
 GType
-shp_structure_get_field_type (ShpStructure * msg, const gchar * name)
+shp_complextype_get_field_type (ShpComplextype * msg, const gchar * name)
 {
-  ShpStructurePrivate *priv;
+  ShpComplextypePrivate *priv;
   _ShpValue *value;
 
-  g_return_val_if_fail (IS_SHP_STRUCTURE (msg), G_TYPE_INVALID);
+  g_return_val_if_fail (IS_SHP_COMPLEXTYPE (msg), G_TYPE_INVALID);
   g_return_val_if_fail (name != NULL, G_TYPE_INVALID);
 
   priv = msg->priv;

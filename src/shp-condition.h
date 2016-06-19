@@ -70,8 +70,8 @@ void shp_condition_add_double_option (ShpCondition * condition,
     const gchar * value_name, gdouble value, ShpConditionOperator op);
 void shp_condition_add_integer_option (ShpCondition * condition,
     const gchar * value_name, gint value, ShpConditionOperator op);
-void shp_condition_add_structure_option (ShpCondition * condition,
-    const gchar * value_name, ShpStructure * value, ShpConditionOperator op);
+void shp_condition_add_complextype_option (ShpCondition * condition,
+    const gchar * value_name, ShpComplextype * value, ShpConditionOperator op);
 gboolean shp_condition_is_satisfied (ShpCondition * condition);
 gboolean shp_condition_process_event (ShpCondition * condition,
     const ShpMessage * event);

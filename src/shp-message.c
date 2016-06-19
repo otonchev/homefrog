@@ -226,19 +226,19 @@ shp_message_add_string (ShpMessage * msg, const gchar * name,
 }
 
 void
-shp_message_add_structure (ShpMessage * msg, const gchar * name,
-    ShpStructure * val)
+shp_message_add_complextype (ShpMessage * msg, const gchar * name,
+    ShpComplextype * val)
 {
   ShpMessagePrivate *priv;
 
   g_return_if_fail (IS_SHP_MESSAGE (msg));
   g_return_if_fail (name != NULL);
-  g_return_if_fail (IS_SHP_STRUCTURE (val));
+  g_return_if_fail (IS_SHP_COMPLEXTYPE (val));
 
   priv = msg->priv;
 
   _ShpValue *value = g_new0 (_ShpValue, 1);
-  g_value_init (&value->value, SHP_STRUCTURE_TYPE);
+  g_value_init (&value->value, SHP_COMPLEXTYPE_TYPE);
   g_value_set_object (&value->value, val);
   g_hash_table_insert (priv->values, g_strdup (name), value);
 }
@@ -408,12 +408,12 @@ shp_message_get_string (ShpMessage * msg, const gchar * name)
   return ret;
 }
 
-const ShpStructure*
-shp_message_get_structure (ShpMessage * msg, const gchar * name)
+const ShpComplextype*
+shp_message_get_complextype (ShpMessage * msg, const gchar * name)
 {
   ShpMessagePrivate *priv;
   _ShpValue *value;
-  const ShpStructure *ret;
+  const ShpComplextype *ret;
 
   g_return_val_if_fail (IS_SHP_MESSAGE (msg), NULL);
   g_return_val_if_fail (name != NULL, NULL);
