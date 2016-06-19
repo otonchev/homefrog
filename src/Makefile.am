@@ -1,4 +1,4 @@
-bin_PROGRAMS = shp
+bin_PROGRAMS = homefrog
 
 #DBUS_GENERATED_C = radio-dbus-gen.c 1wire-dbus-gen.c shp-dbus-gen.c
 #DBUS_GENERATED_H = radio-dbus-gen.h 1wire-dbus-gen.h shp-dbus-gen.h

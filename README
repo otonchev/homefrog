@@ -1,7 +1,15 @@
 Homefrog v0.1 - Plugin-based Home Automation framework written in C/GObject
 
-Current state: C APIs are in place, no documentation yet, tested on Raspberry Pi
-Currently sorting out format for configure files and writing a REST plugin
+Current state: C APIs are more or less in place, no documentation yet, tested
+on Raspberry Pi
+
+Features under development:
+
+    * sorting out format for configure files
+    * REST plugin
+    * scene plugin for controlling group of sensors simultaneously from the
+        REST Api
+    * grovedust plugin for monitoring the air quality in an environment
 
 How to build and run:
 
@@ -15,7 +23,7 @@ How to build and run:
 
     ./configure
     make
-    G_MESSAGES_DEBUG=all ./src/shp ./src/shp.config
+    G_MESSAGES_DEBUG=all ./src/homefrog ./src/homefrog.config
 
 
 API architecture:
@@ -42,8 +50,8 @@ API architecture:
 |                                                               |
 +---------------------------------------------------------------+
 
-Example: Using the guts of the API to control a heater based on the temperature
-in the room:
+Example 1: Using the guts of the API to control a heater based on the
+temperature in the room:
 
     ShpBus *bus;
     ShpGroup *group;
@@ -98,3 +106,17 @@ in the room:
     /* now start the group */
     shp_component_start (SHP_COMPONENT (group));
 
+
+Accessing the REST Api (under development):
+
+to display all sensors at home and their status:
+http://192.168.0.240:6060/home
+
+to display all sensors in the Living room:
+http://192.168.0.240:6060/home/floor1/LivingRoom
+
+to activate heater in Living room on floor 1:
+http://192.168.0.240:6060/home/floor1/LivingRoom/Heater?command=on
+
+to activate scene "MovieTime":
+http://192.168.0.240:6060/home/floor1/LivingRoom/MovieTime?status=active
