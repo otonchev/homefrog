@@ -4,6 +4,7 @@ Current state: C APIs are more or less in place, no documentation yet, tested
 on Raspberry Pi
 
 Features under development:
+---------------------------
 
     * sorting out format for configure files
     * REST plugin
@@ -12,6 +13,7 @@ Features under development:
     * grovedust plugin for monitoring the air quality in an environment
 
 How to build and run:
+---------------------
 
     only first time:
 
@@ -27,6 +29,7 @@ How to build and run:
 
 
 API architecture:
+-----------------
 
 +---------------------------------------------------------------+
 | Group                                                         |
@@ -50,18 +53,30 @@ API architecture:
 |                                                               |
 +---------------------------------------------------------------+
 
-Example 1: Using the guts of the API to control a heater based on the
-temperature in the room:
+Example 1:
+----------
 
+Using the guts of the API to control a heater based on the temperature in the
+room:
+
+    /* Turn Heater in the Living room on floor 1 on if the temperature drops
+     * below 17C and time is after 19:45.
+     */
     ShpBus *bus;
     ShpGroup *group;
     ShpController *controller;
     ShpScene *scene;
     ShpRule *rule;
     ShpMessage *event;
-    ShpCondition *condition;
+    ShpCondition *condition_temp;
+    ShpCondition *condition_time;
+    ShpComplextype *complex_type;
+    ShpPlugin *timer;
     ShpPlugin *temperature;
     ShpPlugin *telldus;
+
+    /* load timer */
+    timer = shp_plugin_factory_create ("timer", "/clock/timer");
 
     /* load ds1820digitemp plugin for obtaining temperature readings */
     temperature = shp_plugin_factory_create ("ds1820digitemp",
@@ -73,7 +88,7 @@ temperature in the room:
     /* load telldus plugin for controlling heater */
     telldus = shp_plugin_factory_create ("telldus",
         "/home/floor1/LivingRoom/Heater");
-    g_object_set (G_OBJECT (telldus), "device-id", "1", NULL);
+    g_object_set (G_OBJECT (telldus), "device-id", 2, NULL);
 
     /* create the group and add the event bus, the controller and the plugins to
      * it */
@@ -81,6 +96,7 @@ temperature in the room:
     group = shp_group_new (bus);
     controller = shp_controller_new ();
     shp_group_add (group, SHP_COMPONENT (controller));
+    shp_group_add (group, SHP_COMPONENT (timer));
     shp_group_add (group, SHP_COMPONENT (temperature));
     shp_group_add (group, SHP_COMPONENT (telldus));
 
@@ -90,14 +106,21 @@ temperature in the room:
     shp_message_add_string (event, "command", "on");
     shp_scene_add_event (scene, event);
 
-    /* create condition to be checked before activating the scene */
-    condition = shp_condition_new ("/home/floor1/LivingRoom/Temperature");
-    shp_condition_add_double_option (condition, "temperature", 15,
-        SHP_CONDITION_OPERATOR_LT);
+    /* create the 2 conditions to be checked before activating the scene */
+    condition_temp = shp_condition_new ("/home/floor1/LivingRoom/Temperature");
+    shp_condition_add_double_option (condition_temp, "temperature", 15,
+        SHP_CONDITION_OPERATOR_GT);
+    condition_time = shp_condition_new ("/clock/timer");
+    complex_type = shp_complextype_factory_create ("timer.time");
+    shp_complextype_add_integer (complex_type, "hour", 19);
+    shp_complextype_add_integer (complex_type, "minutes", 45);
+    shp_condition_add_complextype_option (condition_time, "datetime",
+        complex_type, SHP_CONDITION_OPERATOR_GT);
 
-    /* add condition and scene to rule*/
+    /* add 2 conditions and scene to rule */
     rule = shp_rule_new ();
-    shp_rule_add_condition (rule, condition);
+    shp_rule_add_condition (rule, condition_temp);
+    shp_rule_add_condition (rule, condition_time);
     shp_rule_set_scene (rule, scene);
 
     /* let the controller know about our new rule */
@@ -108,6 +131,7 @@ temperature in the room:
 
 
 Accessing the REST Api (under development):
+-------------------------------------------
 
 to display all sensors at home and their status:
 http://192.168.0.240:6060/home
