@@ -32,7 +32,7 @@ static GMutex mutex;
  * g_object_unref() when no longer needed.
  */
 ShpComplextype*
-shp_complextype_factory_create (gchar * name, gchar * path)
+shp_complextype_factory_create (gchar * name)
 {
   ShpComplextype *complextype = NULL;
   gpointer tmp;
@@ -51,7 +51,7 @@ shp_complextype_factory_create (gchar * name, gchar * path)
 
   object_type = GPOINTER_TO_UINT (tmp);
 
-  complextype = g_object_new (object_type, "name", name, "path", path, NULL);
+  complextype = g_object_new (object_type, NULL);
 
   return complextype;
 }
@@ -133,83 +133,6 @@ shp_complextype_factory_get_complextype_list ()
   return result;
 }
 
-typedef void (* ComplextypeRegisterFunc) ();
-
-/* load single complextype */
-static gboolean
-load_complextype (gchar * path)
-{
-  ComplextypeRegisterFunc complextype_register;
-  GModule *module;
-
-  g_debug ("loading module: %s", path);
-
-  module = g_module_open (path, G_MODULE_BIND_LAZY);
-  if (!module) {
-    g_critical ("unable to load module %s", path);
-    return FALSE;
-  }
-  if (!g_module_symbol (module, "shp_complextype_register",
-      (gpointer *)&complextype_register)) {
-    g_critical ("unable to find shp_register_complextype symbol in %s", path);
-    return FALSE;
-  }
-  if (!complextype_register) {
-    g_critical ("unable to find shp_register_complextype symbol in %s", path);
-    return FALSE;
-  }
-
-  complextype_register ();
-  return TRUE;
-}
-
-/* load all available complextypes from complextype_dir */
-static gboolean
-load_complextypes (const gchar * complextype_dir)
-{
-  GDir *dir;
-  GError *error;
-  const gchar *filename;
-  guint num_complextypes = 0;
-
-  dir = g_dir_open (complextype_dir, 0, &error);
-  if (dir == NULL) {
-    g_critical ("failed to open complextype directory: %s, reason: %s", complextype_dir,
-        error->message);
-    g_clear_error (&error);
-    return FALSE;
-  }
-
-  while ((filename = g_dir_read_name (dir))) {
-    gchar *path = g_strdup_printf ("%s%s", complextype_dir, filename);
-
-    if (!g_str_has_suffix (path, ".so")) {
-      g_free (path);
-      continue;
-    }
-
-    if (!load_complextype (path)) {
-      g_critical ("could not load complextype: %s", path);
-      g_dir_close (dir);
-      return FALSE;
-    } else
-      num_complextypes++;
-
-    g_free (path);
-  }
-
-  if (num_complextypes == 0) {
-    g_critical ("could not load any complextypes");
-    g_dir_close (dir);
-    return FALSE;
-  }
-
-  g_debug ("number of complextypes loaded: %d", num_complextypes);
-  g_dir_close (dir);
-
-  return TRUE;
-}
-
 /**
  * shp_complextype_factory_setup:
  * @complextype_dir: directory where complextype files are located
@@ -219,18 +142,10 @@ load_complextypes (const gchar * complextype_dir)
  * Returns: %TRUE on success and %FALSE otherwise
  */
 gboolean
-shp_complextype_factory_setup (const gchar * complextype_dir)
+shp_complextype_factory_setup ()
 {
   complextypes = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   g_mutex_init (&mutex);
-
-  if (!load_complextypes (complextype_dir)) {
-    g_warning ("unable to load complextypes");
-    g_hash_table_unref (complextypes);
-    complextypes = NULL;
-    g_mutex_clear (&mutex);
-    return FALSE;
-  }
 
   return TRUE;
 }

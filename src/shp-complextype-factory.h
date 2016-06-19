@@ -23,10 +23,10 @@
 #ifndef __SHP_COMPLEXTYPE_FACTORY_H__
 #define __SHP_COMPLEXTYPE_FACTORY_H__
 
-ShpComplextype * shp_complextype_factory_create (gchar * name, gchar * path);
+ShpComplextype * shp_complextype_factory_create (gchar * name);
 gboolean shp_complextype_factory_register (gchar * name, GType object_type);
 gchar** shp_complextype_factory_get_complextype_list ();
-gboolean shp_complextype_factory_setup (const gchar * complextype_dir);
+gboolean shp_complextype_factory_setup ();
 void shp_complextype_factory_cleanup ();
 
 #endif /* __SHP_COMPLEXTYPE_FACTORY_H__ */

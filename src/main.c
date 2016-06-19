@@ -46,6 +46,11 @@ main (int argc, char *argv[])
 
   g_debug ("using config: %s", file_name);
 
+  if (!shp_complextype_factory_setup ()) {
+    g_critical ("unable to set up complextype factory");
+    exit (1);
+  }
+
   /* read plugin dir and load all available plugins */
   file = g_key_file_new ();
   if (!g_key_file_load_from_file (file, file_name, G_KEY_FILE_NONE, NULL)) {
@@ -63,11 +68,6 @@ main (int argc, char *argv[])
   }
 
   g_key_file_free (file);
-
-  if (!shp_complextype_factory_setup (plugin_dir)) {
-    g_critical ("unable to set up complextype factory");
-    exit (1);
-  }
 
 #if 0
   {
