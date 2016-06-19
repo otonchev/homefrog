@@ -12,7 +12,7 @@ BUILT_SOURCES = $(GENERATED_C) $(GENERATED_H)
 #	gdbus-codegen --interface-prefix com.shp. --c-namespace ShpDBus \
 #		--generate-c-code $(basename $@) $<
 
-shp_SOURCES = \
+homefrog_SOURCES = \
 	main.c \
 	shp-bus.c \
 	shp-component.c \
@@ -32,13 +32,13 @@ shp_SOURCES = \
 nodist_shp_SOURCES = $(GENERATED_C)
 noinst_HEADERS = $(GENERATED_H)
 
-shp_CFLAGS = \
+homefrog_CFLAGS = \
 	$(GLIB_CFLAGS) \
 	$(GIOUNIX_CFLAGS) \
 	$(GOBJECT_CFLAGS) \
 	$(GMODULE_CFLAGS) \
 	-Werror -Wunused -Wall -g
-shp_LDADD = \
+homefrog_LDADD = \
 	$(GLIB_LIBS) \
 	$(GIOUNIX_LIBS) \
 	$(GOBJECT_LIBS) \
