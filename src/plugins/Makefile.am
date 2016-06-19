@@ -27,6 +27,7 @@ libtelldus_la_LDFLAGS=-module -avoid-version -shared
 #libmysql_la_LDFLAGS=-module -avoid-version -shared
 
 libtimer_la_SOURCES = \
+	shp-timer-complextype.c \
         shp-timer.c
 libtimer_la_CFLAGS = \
         $(GLIB_CFLAGS) \

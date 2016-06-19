@@ -27,8 +27,7 @@ homefrog_SOURCES = \
 	shp-scene.c \
 	shp-slave-plugin.c \
 	shp-complextype.c \
-	shp-complextype-compare.c \
-	shp-timer-complextype.c
+	shp-complextype-compare.c
 
 nodist_shp_SOURCES = $(GENERATED_C)
 noinst_HEADERS = $(GENERATED_H)

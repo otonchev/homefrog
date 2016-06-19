@@ -29,7 +29,9 @@
 #include "../shp-message.h"
 #include "../shp-component.h"
 #include "../shp-plugin-factory.h"
+#include "../shp-complextype-factory.h"
 #include "shp-timer.h"
+#include "shp-timer-complextype.h"
 
 #define NAME "timer"
 
@@ -171,6 +173,7 @@ plugin_register (void)
 {
   g_debug ("%s: loading plugin", NAME);
   shp_plugin_factory_register (NAME, SHP_TIMER_TYPE);
+  shp_complextype_factory_register ("timer", SHP_COMPLEXTYPE_TIMER_TYPE);
 }
 
 SHP_PLUGIN_REGISTER (plugin_register);

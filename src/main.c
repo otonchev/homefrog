@@ -21,6 +21,7 @@
 
 #include "shp-bus.h"
 #include "shp-controller.h"
+#include "shp-complextype-factory.h"
 #include "shp-component.h"
 #include "shp-group.h"
 #include "shp-message.h"
@@ -62,6 +63,11 @@ main (int argc, char *argv[])
   }
 
   g_key_file_free (file);
+
+  if (!shp_complextype_factory_setup (plugin_dir)) {
+    g_critical ("unable to set up complextype factory");
+    exit (1);
+  }
 
 #if 0
   {

@@ -15,4 +15,3 @@ homefrog-shp-scene.o
 homefrog-shp-slave-plugin.o
 homefrog-shp-complextype.o
 homefrog-shp-complextype-compare.o
-homefrog-shp-timer-complextype.o

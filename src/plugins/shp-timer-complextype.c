@@ -17,7 +17,8 @@
  */
 
 /*
- * ShpComplextypeTimer is the basic unit of passing data from plugins.
+ * ShpComplextypeTimer — complextype representing Time and Date. It allows
+ * the framework to manage and compare times and dates.
  */
 
 #include <stdio.h>
@@ -25,7 +26,7 @@
 #include <glib.h>
 
 #include "shp-timer-complextype.h"
-#include "shp-complextype-compare.h"
+#include "../shp-complextype-compare.h"
 
 static void shp_complextype_timer_interface_init (ShpComplextypeCompareInterface * iface);
 

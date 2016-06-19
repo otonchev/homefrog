@@ -17,8 +17,8 @@
  */
 
 /*
- * ShpComplextypeTimer — complextype containing time-related fields of names and
- * values.
+ * ShpComplextypeTimer — complextype representing Time and Date. It allows
+ * the framework to manage and compare times and dates.
  */
 
 #ifndef __SHP_COMPLEXTYPE_TIMER_H__
@@ -27,7 +27,7 @@
 #include <glib.h>
 #include <glib-object.h>
 
-#include "shp-complextype.h"
+#include "../shp-complextype.h"
 
 G_BEGIN_DECLS
 
