@@ -213,12 +213,19 @@ message_received (ShpSlavePlugin * plugin, ShpBus * bus,
   }
 
   command = shp_message_get_string (message, "command");
+  g_assert (command != NULL);
   set_on = !g_strcmp0 (command, "on");
 
-  if (set_on && get_status (SHP_TELLDUS (plugin)) != 1)
+  g_debug ("telldus: command: %s", command);
+
+  if (set_on && get_status (SHP_TELLDUS (plugin)) != 1) {
+    g_debug ("telldus: turning device on");
     change_status (SHP_TELLDUS (plugin), TRUE);
-  else if (get_status (SHP_TELLDUS (plugin)) != 0)
+  } else if (!set_on && get_status (SHP_TELLDUS (plugin)) != 0) {
+    g_debug ("telldus: turning device off");
     change_status (SHP_TELLDUS (plugin), FALSE);
+  } else
+    g_debug ("telldus: device is already in desired mode");
 }
 
 static void

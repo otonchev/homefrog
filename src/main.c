@@ -69,15 +69,20 @@ main (int argc, char *argv[])
 
   g_key_file_free (file);
 
-#if 0
+#if 1
   {
+    /* Turn Heater in the Living room on floor 1 on if the temperature drops
+     * below 17C and time is after 19:45.
+     */
     ShpBus *bus;
     ShpGroup *group;
     ShpController *controller;
     ShpScene *scene;
     ShpRule *rule;
     ShpMessage *event;
-    ShpCondition *condition;
+    ShpCondition *condition_temp;
+    ShpCondition *condition_time;
+    ShpComplextype *complex_type;
     ShpPlugin *timer;
     ShpPlugin *temperature;
     ShpPlugin *telldus;
@@ -113,14 +118,22 @@ main (int argc, char *argv[])
     shp_message_add_string (event, "command", "on");
     shp_scene_add_event (scene, event);
 
-    /* create condition to be checked before activating the scene */
-    condition = shp_condition_new ("/home/floor1/LivingRoom/Temperature");
-    shp_condition_add_double_option (condition, "temperature", 15,
-        SHP_CONDITION_OPERATOR_LT);
+    /* create the 2 conditions to be checked before activating the scene */
+    condition_temp = shp_condition_new ("/home/floor1/LivingRoom/Temperature");
+    shp_condition_add_double_option (condition_temp, "temperature", 15,
+        SHP_CONDITION_OPERATOR_GT);
 
-    /* add condition and scene to rule*/
+    condition_time = shp_condition_new ("/clock/timer");
+    complex_type = shp_complextype_factory_create ("timer.time");
+    shp_complextype_add_integer (complex_type, "hour", 19);
+    shp_complextype_add_integer (complex_type, "minutes", 45);
+    shp_condition_add_complextype_option (condition_time, "datetime",
+        complex_type, SHP_CONDITION_OPERATOR_GT);
+
+    /* add 2 conditions and scene to rule */
     rule = shp_rule_new ();
-    shp_rule_add_condition (rule, condition);
+    shp_rule_add_condition (rule, condition_temp);
+    shp_rule_add_condition (rule, condition_time);
     shp_rule_set_scene (rule, scene);
 
     /* let the controller know about our new rule */

@@ -179,8 +179,10 @@ shp_rule_process_event (ShpRule * rule, ShpMessage * event)
 {
   ShpRulePrivate *priv;
   gboolean result = TRUE;
-  const gchar *path;
+  const gchar *source_path;
+  const gchar *destination_path;
   ShpCondition *condition;
+  gboolean was_satisfied;
 
   g_return_val_if_fail (IS_SHP_RULE (rule), FALSE);
   g_return_val_if_fail (IS_SHP_MESSAGE (event), FALSE);
@@ -192,18 +194,30 @@ shp_rule_process_event (ShpRule * rule, ShpMessage * event)
     return FALSE;
   }
 
-  path = shp_message_get_source_path (event);
+  source_path = shp_message_get_source_path (event);
 
-  condition = SHP_CONDITION (g_hash_table_lookup (priv->conditions, path));
+  condition = SHP_CONDITION (g_hash_table_lookup (priv->conditions,
+      source_path));
   if (!condition) {
-    g_debug ("rule: path is of no interest %s", path);
+    g_debug ("rule: path is of no interest %s, %s", source_path,
+        destination_path);
     return FALSE;
   }
 
-  g_debug ("rule: processing event from path: %s", path);
+  g_debug ("rule: processing event from path: %s, %s", source_path,
+      destination_path);
 
-  if (!shp_condition_process_event (condition, event))
+  was_satisfied = shp_condition_is_satisfied (condition);
+
+  if (!shp_condition_process_event (condition, event)) {
+    g_debug ("rule: condition not satisfied");
     return FALSE;
+  }
+
+  if (was_satisfied) {
+    g_debug ("rule: condition was already satisfied, nothing new, ignoring");
+    return FALSE;
+  }
 
   g_hash_table_foreach (priv->conditions, check_cond, &result);
 

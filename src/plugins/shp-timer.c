@@ -105,6 +105,7 @@ send_status (ShpTimer * self)
 {
   ShpComponent *component = SHP_COMPONENT (self);
   ShpMessage *msg;
+  ShpComplextype *complex_type;
   time_t t = time (NULL);
   struct tm *tm_struct = localtime (&t);
 
@@ -118,6 +119,17 @@ send_status (ShpTimer * self)
   shp_message_add_integer (msg, "month", tm_struct->tm_mon + 1);
   shp_message_add_integer (msg, "day", tm_struct->tm_mday);
   shp_message_add_integer (msg, "week_day", tm_struct->tm_wday);
+
+  complex_type = shp_complextype_factory_create ("timer");
+  shp_complextype_add_integer (complex_type, "hour", tm_struct->tm_hour);
+  shp_complextype_add_integer (complex_type, "minutes", tm_struct->tm_min);
+  shp_complextype_add_integer (complex_type, "seconds", tm_struct->tm_sec);
+  shp_complextype_add_integer (complex_type, "year", tm_struct->tm_year + 1900);
+  shp_complextype_add_integer (complex_type, "month", tm_struct->tm_mon + 1);
+  shp_complextype_add_integer (complex_type, "day", tm_struct->tm_mday);
+  shp_complextype_add_integer (complex_type, "week_day", tm_struct->tm_wday);
+  shp_message_add_complextype (msg, "datetime", complex_type);
+
 
   if (!shp_component_post_message (component, msg)) {
     g_warning ("timer: could not post message on bus");
@@ -173,7 +185,7 @@ plugin_register (void)
 {
   g_debug ("%s: loading plugin", NAME);
   shp_plugin_factory_register (NAME, SHP_TIMER_TYPE);
-  shp_complextype_factory_register ("timer", SHP_COMPLEXTYPE_TIMER_TYPE);
+  shp_complextype_factory_register ("timer.time", SHP_COMPLEXTYPE_TIMER_TYPE);
 }
 
 SHP_PLUGIN_REGISTER (plugin_register);

@@ -425,9 +425,9 @@ shp_message_get_complextype (ShpMessage * msg, const gchar * name)
     g_warning ("incomplete data, missing %s", name);
     return NULL;
   }
-  if (G_VALUE_TYPE (&value->value) != SHP_MESSAGE_TYPE) {
+  if (G_VALUE_TYPE (&value->value) != SHP_COMPLEXTYPE_TYPE) {
     g_warning ("invalid type of data, expected: %s, got: %s",
-        g_type_name (SHP_MESSAGE_TYPE), G_VALUE_TYPE_NAME (&value->value));
+        g_type_name (SHP_COMPLEXTYPE_TYPE), G_VALUE_TYPE_NAME (&value->value));
     return NULL;
   }
   ret = g_value_get_object (&value->value);
@@ -718,7 +718,6 @@ print_pair (gpointer key, gpointer val, gpointer user_data)
           g_value_get_long (&value->value));
       break;
     default:
-      g_assert_not_reached ();
       break;
   }
 }

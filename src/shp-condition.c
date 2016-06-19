@@ -208,7 +208,6 @@ shp_condition_add_complextype_option (ShpCondition * condition,
   _Option *option;
 
   g_return_if_fail (IS_SHP_CONDITION (condition));
-  g_return_if_fail (op == SHP_CONDITION_OPERATOR_EQ);
 
   priv = condition->priv;
 

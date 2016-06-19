@@ -53,9 +53,9 @@ shp_complextype_timer_class_init (ShpComplextypeTimerClass * klass)
   GObjectClass *gobject_class;
 
   gobject_class = G_OBJECT_CLASS (klass);
-
+/*
   g_type_class_add_private (klass, sizeof (ShpComplextypeTimerPrivate));
-
+*/
   gobject_class->finalize = shp_complextype_timer_finalize;
   gobject_class->set_property = shp_complextype_timer_set_property;
   gobject_class->get_property = shp_complextype_timer_get_property;
@@ -141,9 +141,9 @@ compare (ShpComplextypeCompare * data1, ShpComplextypeCompare * data2)
 
     if (hour1 == hour2 && minutes1 == minutes2)
       comparison = SHP_COMPLEXTYPE_COMPARE_EQ;
-    else if (hour1 == hour2 && minutes1 > minutes2)
+    else if (hour1 == hour2 && minutes1 < minutes2)
       comparison = SHP_COMPLEXTYPE_COMPARE_GT;
-    else if (hour1 > hour2)
+    else if (hour1 < hour2)
       comparison = SHP_COMPLEXTYPE_COMPARE_GT;
     else
       comparison = SHP_COMPLEXTYPE_COMPARE_LT;

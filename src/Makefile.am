@@ -37,7 +37,7 @@ homefrog_CFLAGS = \
 	$(GIOUNIX_CFLAGS) \
 	$(GOBJECT_CFLAGS) \
 	$(GMODULE_CFLAGS) \
-	-Werror -Wunused -Wall -g
+	-Werror -Wunused -Wall -g -O0
 homefrog_LDADD = \
 	$(GLIB_LIBS) \
 	$(GIOUNIX_LIBS) \

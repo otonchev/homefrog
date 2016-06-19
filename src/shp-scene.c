@@ -176,7 +176,7 @@ shp_scene_activate (ShpScene * scene)
   events = priv->events;
   while (events != NULL) {
     ShpMessage *event = SHP_MESSAGE (events->data);
-    if (!shp_bus_post (priv->bus, event)) {
+    if (!shp_bus_post (priv->bus, g_object_ref (event))) {
       g_warning ("unable to post event, scene will not be complete");
       result = FALSE;
       /* keep trying with other event from the scene */
