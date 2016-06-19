@@ -3,6 +3,7 @@ Homefrog v0.1 - Plugin-based Home Automation framework written in C/GObject
 Current state: C APIs are more or less in place, no documentation yet, tested
 on Raspberry Pi
 
+
 Features under development:
 ---------------------------
 
@@ -11,6 +12,7 @@ Features under development:
     * scene plugin for controlling group of sensors simultaneously from the
         REST Api
     * grovedust plugin for monitoring the air quality in an environment
+
 
 How to build and run:
 ---------------------
@@ -53,11 +55,12 @@ API architecture:
 |                                                               |
 +---------------------------------------------------------------+
 
+
 Example 1:
 ----------
 
 Using the guts of the API to control a heater based on the temperature in the
-room:
+room and the time:
 
     /* Turn Heater in the Living room on floor 1 on if the temperature drops
      * below 17C and time is after 19:45.
