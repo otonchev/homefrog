@@ -1,5 +1,6 @@
 lib_LTLIBRARIES = \
 	libds1820digitemp.la \
+	librest.la \
 	libtelldus.la \
 	libtimer.la
 #	libmysql.la \
@@ -15,6 +16,16 @@ libtelldus_la_CFLAGS = \
         -Werror -Wunused -Wall
 libtelldus_la_LIBADD=-ltelldus-core
 libtelldus_la_LDFLAGS=-module -avoid-version -shared
+
+librest_la_SOURCES = \
+        shp-rest.c
+librest_la_CFLAGS = \
+        $(GLIB_CFLAGS) \
+        $(GOBJECT_CFLAGS) \
+        -Werror -Wunused -Wall
+librest_la_LIBADD=
+librest_la_LDFLAGS=-module -avoid-version -shared
+
 #
 #libmysql_la_SOURCES = \
 #        shp-mysql.c

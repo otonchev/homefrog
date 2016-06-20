@@ -83,9 +83,14 @@ main (int argc, char *argv[])
     ShpCondition *condition_temp;
     ShpCondition *condition_time;
     ShpComplextype *complex_type;
+    ShpPlugin *rest;
     ShpPlugin *timer;
     ShpPlugin *temperature;
     ShpPlugin *telldus;
+
+    /* load REST plugin */
+    rest = shp_plugin_factory_create ("rest", NULL);
+    g_object_set (G_OBJECT (rest), "port", 6666, NULL);
 
     /* load timer */
     timer = shp_plugin_factory_create ("timer", "/clock/timer");
@@ -108,6 +113,7 @@ main (int argc, char *argv[])
     group = shp_group_new (bus);
     controller = shp_controller_new ();
     shp_group_add (group, SHP_COMPONENT (controller));
+    shp_group_add (group, SHP_COMPONENT (rest));
     shp_group_add (group, SHP_COMPONENT (timer));
     shp_group_add (group, SHP_COMPONENT (temperature));
     shp_group_add (group, SHP_COMPONENT (telldus));
@@ -124,7 +130,7 @@ main (int argc, char *argv[])
         SHP_CONDITION_OPERATOR_GT);
 
     condition_time = shp_condition_new ("/clock/timer");
-    complex_type = shp_complextype_factory_create ("timer.time");
+    complex_type = shp_complextype_factory_create ("timer.datetime");
     shp_complextype_add_integer (complex_type, "hour", 19);
     shp_complextype_add_integer (complex_type, "minutes", 45);
     shp_condition_add_complextype_option (condition_time, "datetime",

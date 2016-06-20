@@ -71,6 +71,8 @@ struct _ShpSlavePluginClass {
   /* virtual methods for subclasses */
   void (*message_received) (ShpSlavePlugin * plugin, ShpBus * bus,
       ShpMessage * message);
+  void (*message_received_any) (ShpSlavePlugin * plugin, ShpBus * bus,
+      ShpMessage * message);
 };
 
 GType shp_slave_plugin_get_type (void);

@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <glib.h>
+#include <string.h>
 
 #include "shp-message.h"
 
@@ -36,8 +37,8 @@ enum
 };
 
 #define DEFAULT_NAME "no_name"
-#define DEFAULT_SOURCE_PATH "/empty path"
-#define DEFAULT_DESTINATION_PATH "/empty path"
+#define DEFAULT_SOURCE_PATH NULL
+#define DEFAULT_DESTINATION_PATH NULL
 
 G_DEFINE_TYPE (ShpMessage, shp_message, G_TYPE_OBJECT);
 
@@ -198,6 +199,81 @@ shp_message_new_command (const gchar * destination_path)
 {
   return g_object_new (SHP_MESSAGE_TYPE, "destination-path", destination_path,
       NULL);
+}
+
+/* command=(string)on&test=(string)blabla */
+ShpMessage*
+shp_message_new_command_from_string (const gchar * destination_path,
+    const gchar * options)
+{
+  ShpMessage *result;
+  gchar **options_list;
+  guint i;
+
+  g_return_val_if_fail (destination_path != NULL, NULL);
+  g_return_val_if_fail (options != NULL, NULL);
+
+  g_debug ("message: creating message from string");
+
+  result = shp_message_new_command (destination_path);
+
+  options_list = g_strsplit (options, "&", 0);
+  for (i = 0; options_list[i] != NULL; i++) {
+    gchar *p;
+    gchar *q;
+
+    g_debug ("message: current option: %s", options_list[i]);
+
+    if ((p = strchr (options_list[i], '=')) == NULL) {
+      g_strfreev (options_list);
+      goto error;
+    }
+
+    *p = '\0';
+    p++;
+
+    g_debug ("message: value and value type: %s", p);
+
+    if (*p != '(') {
+      g_strfreev (options_list);
+      goto error;
+    }
+
+    if ((q = strchr (p, ')')) == NULL) {
+      g_debug ("message: invalid format for type and value");
+      g_strfreev (options_list);
+      goto error;
+    }
+
+    p++;
+
+    *q = '\0';
+    q++;
+
+    g_debug ("message: name: %s, value: %s, type: %s", options_list[i], p, q);
+
+    if (!g_strcmp0 (p, "string")) {
+      shp_message_add_string (result, options_list[i], q);
+    } else if (!g_strcmp0 (p, "int")) {
+      gint int_val;
+      int_val = atoi (q);
+      shp_message_add_integer (result, options_list[i], int_val);
+    } else if (!g_strcmp0 (p, "double")) {
+      gint double_val;
+      double_val = atof (q);
+      shp_message_add_double (result, options_list[i], double_val);
+    } else {
+      goto error;
+    }
+  }
+
+  g_strfreev (options_list);
+
+  return result;
+
+error:
+  g_object_unref (result);
+  return NULL;
 }
 
 /**

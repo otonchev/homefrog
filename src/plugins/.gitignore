@@ -5,6 +5,9 @@ libds1820digitemp_la-shp-base1wire.lo
 libds1820digitemp_la-shp-ds1820digitemp.lo
 libds1820digitemp_la-shp-ds1820digitemp.o
 libds1820digitemp_la-shp-base1wire.o
+librest.la
+librest_la-shp-rest.lo
+librest_la-shp-rest.o
 libtelldus.la
 libtelldus_la-shp-telldus.lo
 libtelldus_la-shp-telldus.o

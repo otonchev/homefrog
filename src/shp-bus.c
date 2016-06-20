@@ -155,29 +155,38 @@ thread_func (gpointer data)
     g_debug ("bus: find handlers for message: %s", msg_str);
     g_free (msg_str);
 
+    /* iterate all handlers and find ones interested in this event */
     while (handlers != NULL) {
       gboolean call_func = TRUE;
       ShpBusMessageHandler *handler = (ShpBusMessageHandler *)(handlers->data);
 
-      g_debug ("bus: checking handler");
+      g_debug ("bus: checking handler: source: %s, destination: %s",
+          handler->source_path, handler->destination_path);
 
-      /* check if source_path matches if present */
+      /* check if source_path is present and supported by current handler */
       if (handler->source_path) {
         const gchar *source_path = shp_message_get_source_path (msg);
-        g_debug ("bus: source handler path: %s, event path: %s",
+        g_debug ("bus: source handler path: %s, source event path: %s",
             handler->source_path, source_path);
-        if (g_strcmp0 (handler->source_path, source_path))
+        if (!source_path ||
+            (g_strcmp0 (handler->source_path, SHP_BUS_EVENT_TYPE_ANY) &&
+            g_strcmp0 (handler->source_path, source_path)))
           call_func = FALSE;
-      }
+      } else if (shp_message_get_source_path (msg) != NULL)
+        call_func = FALSE;
 
-      /* check if destination_path matches if present */
+      /* check if destination_path is present and supported by current
+       * handler */
       if (handler->destination_path) {
         const gchar *destination_path = shp_message_get_destination_path (msg);
-        g_debug ("bus: destination handler path: %s, event path: %s",
-            handler->destination_path, destination_path);
-        if (g_strcmp0 (handler->destination_path, destination_path))
+        g_debug ("bus: destination handler path: %s, destination event path: "
+            "%s", handler->destination_path, destination_path);
+        if (!destination_path ||
+            (g_strcmp0 (handler->destination_path, SHP_BUS_EVENT_TYPE_ANY) &&
+            g_strcmp0 (handler->destination_path, destination_path)))
           call_func = FALSE;
-      }
+      } else if (shp_message_get_destination_path (msg))
+        call_func = FALSE;
 
       if (call_func) {
         g_debug ("bus: handler supports paths: %s, %s", handler->source_path,
@@ -186,6 +195,7 @@ thread_func (gpointer data)
       } else
         g_debug ("bus: handler does not support paths: %s, %s",
             handler->source_path, handler->destination_path);
+
       handlers = g_slist_next (handlers);
     }
 

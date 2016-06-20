@@ -32,6 +32,7 @@ G_DEFINE_TYPE (ShpSlavePlugin, shp_slave_plugin, SHP_PLUGIN_TYPE);
 
 struct _ShpSlavePluginPrivate {
   ShpBusMessageHandler *handler;
+  ShpBusMessageHandler *handler_any;
 };
 
 enum
@@ -82,10 +83,26 @@ message_received (ShpBus * bus, ShpMessage * message, gpointer user_data)
   ShpSlavePluginClass *klass;
   ShpSlavePlugin *plugin = SHP_SLAVE_PLUGIN (user_data);
 
+  g_debug ("slaveplugin: received message");
+
   klass = SHP_SLAVE_PLUGIN_GET_CLASS (plugin);
 
   if (klass->message_received)
     klass->message_received (plugin, bus, message);
+}
+
+static void
+message_received_any (ShpBus * bus, ShpMessage * message, gpointer user_data)
+{
+  ShpSlavePluginClass *klass;
+  ShpSlavePlugin *plugin = SHP_SLAVE_PLUGIN (user_data);
+
+  g_debug ("slaveplugin: received message any");
+
+  klass = SHP_SLAVE_PLUGIN_GET_CLASS (plugin);
+
+  if (klass->message_received_any)
+    klass->message_received_any (plugin, bus, message);
 }
 
 static void
@@ -118,6 +135,11 @@ shp_slave_plugin_start (ShpComponent * component)
   priv->handler = shp_bus_add_async_handler (bus, message_received,
       g_object_ref (plugin), g_object_unref,
       NULL, shp_component_get_path (component));
+
+  priv->handler_any = shp_bus_add_async_handler (bus, message_received_any,
+      g_object_ref (plugin), g_object_unref,
+      SHP_BUS_EVENT_TYPE_ANY, NULL);
+
   g_object_unref (bus);
 
   return TRUE;
@@ -146,6 +168,12 @@ shp_slave_plugin_stop (ShpComponent * component)
     shp_bus_remove_async_handler (bus, priv->handler);
     priv->handler = NULL;
   }
+
+  if (priv->handler_any) {
+    shp_bus_remove_async_handler (bus, priv->handler_any);
+    priv->handler_any = NULL;
+  }
+
   g_object_unref (bus);
 
   return TRUE;

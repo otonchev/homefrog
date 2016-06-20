@@ -3,12 +3,17 @@ Homefrog v0.1 - Plugin-based Home Automation framework written in C/GObject
 Current state: C APIs are more or less in place, no documentation yet, tested
 on Raspberry Pi
 
+All plugins are built and installed separately, they can be found under:
+"src/plugins". The application will automatically load them at startup.
+Plugins are free to load plugin-specific complex data types when basic types
+like integer, string, double, etc are not enough.
+
 
 Features under development:
 ---------------------------
 
     * sorting out format for configure files
-    * REST plugin
+    * improve REST plugin, add JSON support
     * scene plugin for controlling group of sensors simultaneously from the
         REST Api
     * grovedust plugin for monitoring the air quality in an environment
@@ -74,9 +79,14 @@ room and the time:
     ShpCondition *condition_temp;
     ShpCondition *condition_time;
     ShpComplextype *complex_type;
+    ShpPlugin *rest;
     ShpPlugin *timer;
     ShpPlugin *temperature;
     ShpPlugin *telldus;
+
+    /* load REST plugin */
+    rest = shp_plugin_factory_create ("rest", NULL);
+    g_object_set (G_OBJECT (rest), "port", 6666, NULL);
 
     /* load timer */
     timer = shp_plugin_factory_create ("timer", "/clock/timer");
@@ -99,6 +109,7 @@ room and the time:
     group = shp_group_new (bus);
     controller = shp_controller_new ();
     shp_group_add (group, SHP_COMPONENT (controller));
+    shp_group_add (group, SHP_COMPONENT (rest));
     shp_group_add (group, SHP_COMPONENT (timer));
     shp_group_add (group, SHP_COMPONENT (temperature));
     shp_group_add (group, SHP_COMPONENT (telldus));
@@ -113,6 +124,7 @@ room and the time:
     condition_temp = shp_condition_new ("/home/floor1/LivingRoom/Temperature");
     shp_condition_add_double_option (condition_temp, "temperature", 15,
         SHP_CONDITION_OPERATOR_GT);
+
     condition_time = shp_condition_new ("/clock/timer");
     complex_type = shp_complextype_factory_create ("timer.time");
     shp_complextype_add_integer (complex_type, "hour", 19);
@@ -133,17 +145,20 @@ room and the time:
     shp_component_start (SHP_COMPONENT (group));
 
 
-Accessing the REST Api (under development):
--------------------------------------------
+Accessing the REST Api:
+-----------------------
 
 to display all sensors at home and their status:
-http://192.168.0.240:6060/home
+http://192.168.0.240:6666/home
 
-to display all sensors in the Living room:
-http://192.168.0.240:6060/home/floor1/LivingRoom
+to display all sensors in the Living room and their status:
+http://192.168.0.240:6666/home/floor1/LivingRoom
 
-to activate heater in Living room on floor 1:
-http://192.168.0.240:6060/home/floor1/LivingRoom/Heater?command=on
+to display status for the Heater in the Living room:
+http://192.168.0.240:6666/home/floor1/LivingRoom/Heater
+
+to activate the Heater in the Living room on floor 1:
+http://192.168.0.240:6666/home/floor1/LivingRoom/Heater?command=on
 
 to activate scene "MovieTime":
-http://192.168.0.240:6060/home/floor1/LivingRoom/MovieTime?status=active
+http://192.168.0.240:6666/home/floor1/LivingRoom/MovieTime?status=active

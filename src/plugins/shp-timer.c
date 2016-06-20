@@ -120,7 +120,7 @@ send_status (ShpTimer * self)
   shp_message_add_integer (msg, "day", tm_struct->tm_mday);
   shp_message_add_integer (msg, "week_day", tm_struct->tm_wday);
 
-  complex_type = shp_complextype_factory_create ("timer");
+  complex_type = shp_complextype_factory_create ("timer.datetime");
   shp_complextype_add_integer (complex_type, "hour", tm_struct->tm_hour);
   shp_complextype_add_integer (complex_type, "minutes", tm_struct->tm_min);
   shp_complextype_add_integer (complex_type, "seconds", tm_struct->tm_sec);
@@ -185,7 +185,8 @@ plugin_register (void)
 {
   g_debug ("%s: loading plugin", NAME);
   shp_plugin_factory_register (NAME, SHP_TIMER_TYPE);
-  shp_complextype_factory_register ("timer.time", SHP_COMPLEXTYPE_TIMER_TYPE);
+  shp_complextype_factory_register ("timer.datetime",
+      SHP_COMPLEXTYPE_TIMER_TYPE);
 }
 
 SHP_PLUGIN_REGISTER (plugin_register);

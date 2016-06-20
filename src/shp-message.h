@@ -61,6 +61,7 @@ struct _ShpMessageClass {
 
 ShpMessage* shp_message_new (const gchar * source_path);
 ShpMessage* shp_message_new_command (const gchar * destination_path);
+ShpMessage* shp_message_new_command_from_string (const gchar * destination_path, const gchar * options);
 
 void shp_message_add_string (ShpMessage * msg, const gchar * name, const gchar * value);
 void shp_message_add_integer (ShpMessage * msg, const gchar * name, gint value);
