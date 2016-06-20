@@ -147,6 +147,9 @@ main (int argc, char *argv[])
 
     /* now start the group */
     shp_component_start (SHP_COMPONENT (group));
+
+    /* the group owns and manages all objects added to it, they will be
+     * automatically freed when the group itself is freed */
   }
 #endif
 
