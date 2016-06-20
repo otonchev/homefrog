@@ -14,9 +14,7 @@ Features under development:
 
     * sorting out format for configure files
     * improve REST plugin, add JSON support
-    * scene plugin for controlling group of sensors simultaneously from the
-        REST Api
-    * grovedust plugin for monitoring the air quality in an environment
+    * grovedust plugin for monitoring the air quality in an environment(PM2.5)
 
 
 How to build and run:
@@ -147,6 +145,41 @@ room and the time:
     /* the group owns and manages all objects added to it, they will be
      * automatically freed when the group itself is freed */
 
+Example 2:
+----------
+
+Turn off all heaters in the Living room. Extend Example 1 with the lines below:
+
+
+    /* load telldus plugins for controlling heaters */
+    telldus = shp_plugin_factory_create ("telldus",
+        "/home/floor1/LivingRoom/Heater1");
+    g_object_set (G_OBJECT (telldus), "device-id", 2, NULL);
+    shp_group_add (group, SHP_COMPONENT (telldus));
+
+    telldus2 = shp_plugin_factory_create ("telldus",
+        "/home/floor1/LivingRoom/Heater2");
+    g_object_set (G_OBJECT (telldus2), "device-id", 1, NULL);
+    shp_group_add (group, SHP_COMPONENT (telldus2));
+
+    /* load scenectl plugin for turning off all heaters in the Living room
+     * simultaneously through the REST API */
+    scenectl = shp_plugin_factory_create ("scenectl",
+        "/home/floor1/LivingRoom/TurnHeatersOff");
+    scene = shp_scene_new (g_object_ref (bus));
+    event = shp_message_new_command ("/home/floor1/LivingRoom/Heater1");
+    shp_message_add_string (event, "command", "off");
+    shp_scene_add_event (scene, event);
+    event = shp_message_new_command ("/home/floor1/LivingRoom/Heater2");
+    shp_message_add_string (event, "command", "off");
+    shp_scene_add_event (scene, event);
+    g_object_set (G_OBJECT (scenectl), "scene", scene, NULL);
+    shp_group_add (group, SHP_COMPONENT (scenectl));
+
+To turn off both heaters simultaneously call
+"/home/floor1/LivingRoom/TurnHeatersOff" as shown below.
+
+
 Accessing the REST Api:
 -----------------------
 
@@ -162,5 +195,5 @@ http://192.168.0.240:6666/home/floor1/LivingRoom/Heater
 to activate the Heater in the Living room on floor 1:
 http://192.168.0.240:6666/home/floor1/LivingRoom/Heater?command=(string)on
 
-to activate scene "MovieTime":
-http://192.168.0.240:6666/home/floor1/LivingRoom/MovieTime?status=active
+to activate scene "TurnOffHeaters":
+http://192.168.0.240:6666/home/floor1/LivingRoom/TurnHeatersOff?command=activate

@@ -67,7 +67,7 @@ shp_scenectl_class_init (ShpScenectlClass * klass)
   g_object_class_install_property (gobject_class, PROP_SCENE,
       g_param_spec_object ("scene", "The Scene",
           "Scene the plugin will activate",
-          SHP_BUS_TYPE, G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
+          SHP_SCENE_TYPE, G_PARAM_READWRITE));
 }
 
 static void
