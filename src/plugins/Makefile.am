@@ -2,6 +2,7 @@ lib_LTLIBRARIES = \
 	libds1820digitemp.la \
 	librest.la \
 	libtelldus.la \
+	libscenectl.la \
 	libtimer.la
 #	libmysql.la \
 #	libraspberrygpio.la \
@@ -25,6 +26,15 @@ librest_la_CFLAGS = \
         -Werror -Wunused -Wall
 librest_la_LIBADD=
 librest_la_LDFLAGS=-module -avoid-version -shared
+
+libscenectl_la_SOURCES = \
+        shp-scenectl.c
+libscenectl_la_CFLAGS = \
+        $(GLIB_CFLAGS) \
+        $(GOBJECT_CFLAGS) \
+        -Werror -Wunused -Wall
+libscenectl_la_LIBADD=
+libscenectl_la_LDFLAGS=-module -avoid-version -shared
 
 #
 #libmysql_la_SOURCES = \
