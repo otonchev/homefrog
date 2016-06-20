@@ -162,6 +162,7 @@ send_status (ShpBase1wire * self)
 
   msg = shp_message_new (shp_component_get_path (component));
   shp_message_add_double (msg, "temperature", reading);
+  shp_message_add_string (msg, "device_id", self->device_id);
 
   if (!shp_component_post_message (component, msg)) {
     g_warning ("base1wire: could not post message on bus");

@@ -19,3 +19,8 @@ libtimer_la-shp-timer.lo
 libtimer_la-shp-timer.o
 libtimer_la-shp-timer-complextype.lo
 libtimer_la-shp-timer-complextype.o
+libraspberrygpiotemp.la
+libraspberrygpiotemp_la-shp-base1wire.lo
+libraspberrygpiotemp_la-shp-base1wire.o
+libraspberrygpiotemp_la-shp-raspberrygpiotemp.lo
+libraspberrygpiotemp_la-shp-raspberrygpiotemp.o

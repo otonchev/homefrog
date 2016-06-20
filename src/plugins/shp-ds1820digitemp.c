@@ -38,15 +38,13 @@
  *
  * This is the configuration specification for this plugin:
  *
- * Config spec:
- *
  * Properties inherited from baseplugin:
  *
- * device-id=<string>    Optional
+ * device-id=<string>    id from the config file
  *
  * Properties for this plugin (Required):
  *
- * config-dir=<string>
+ * config-dir=<string>   folder where the config file is located
  */
 
 #include <stdio.h>
