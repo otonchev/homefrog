@@ -195,5 +195,6 @@ http://192.168.0.240:6666/home/floor1/LivingRoom/Heater
 to activate the Heater in the Living room on floor 1:
 http://192.168.0.240:6666/home/floor1/LivingRoom/Heater?command=(string)on
 
-to activate scene "TurnOffHeaters":
-http://192.168.0.240:6666/home/floor1/LivingRoom/TurnHeatersOff?command=activate
+to activate scene "TurnHeatersOff":
+http://192.168.0.240:6666/home/floor1/LivingRoom/TurnHeatersOff
+    ?command=(string)activate
