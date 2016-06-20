@@ -47,6 +47,7 @@ struct _ShpRest {
 
   /*< private >*/
   GHashTable *devices;
+  GHashTable *history;
   gint port;
   GSocketService *service;
   GMutex mutex;

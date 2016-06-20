@@ -63,6 +63,8 @@ ShpMessage* shp_message_new (const gchar * source_path);
 ShpMessage* shp_message_new_command (const gchar * destination_path);
 ShpMessage* shp_message_new_command_from_string (const gchar * destination_path, const gchar * options);
 
+ShpMessage* shp_message_copy (const ShpMessage * message);
+
 void shp_message_add_string (ShpMessage * msg, const gchar * name, const gchar * value);
 void shp_message_add_integer (ShpMessage * msg, const gchar * name, gint value);
 void shp_message_add_double (ShpMessage * msg, const gchar * name, gdouble value);
@@ -85,8 +87,8 @@ guint shp_message_size (ShpMessage * msg);
 void shp_message_foreach (ShpMessage * msg, ShpMessageFunc func, gpointer user_data);
 
 const gchar* shp_message_get_name (ShpMessage * msg);
-const gchar* shp_message_get_source_path (ShpMessage * msg);
-const gchar* shp_message_get_destination_path (ShpMessage * msg);
+const gchar* shp_message_get_source_path (const ShpMessage * msg);
+const gchar* shp_message_get_destination_path (const ShpMessage * msg);
 
 gchar* shp_message_to_string (ShpMessage * msg);
 

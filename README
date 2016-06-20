@@ -14,7 +14,6 @@ Features under development:
 
     * sorting out format for configure files
     * improve REST plugin, add JSON support
-    * keep and display history of all events in the house
     * grovedust plugin for monitoring the air quality in an environment(PM2.5)
 
 
@@ -181,7 +180,7 @@ To turn off both heaters simultaneously call
 "/home/floor1/LivingRoom/TurnHeatersOff" as shown below.
 
 
-Accessing the REST Api:
+Accessing the REST API:
 -----------------------
 
 To display all sensors at home and their status:
@@ -189,13 +188,18 @@ http://192.168.0.240:6666/home
 
 >output:
 
-/home/floor1/Bedroom2/Temperature 'temperature':'(double)22.100000' 'device_id':'(string)4'
+/home/floor1/Bedroom2/Temperature 'temperature':'(double)22.100000'
+    'device_id':'(string)4'
 /home/floor1/LivingRoom/TurnOffHeaters
-/home/floor1/LivingRoom/Temperature 'temperature':'(double)20.700001' 'device_id':'(string)2'
-/home/floor1/BedRoom1/Temperature 'temperature':'(double)20.600000' 'device_id':'(string)3'
-/home/floor1/Garage/Temperature 'temperature':'(double)16.799999' 'device_id':'(string)1'
+/home/floor1/LivingRoom/Temperature 'temperature':'(double)20.700001'
+    'device_id':'(string)2'
+/home/floor1/BedRoom1/Temperature 'temperature':'(double)20.600000'
+    'device_id':'(string)3'
+/home/floor1/Garage/Temperature 'temperature':'(double)16.799999'
+    'device_id':'(string)1'
 /home/floor1/LivingRoom/Heater1 'status':'(string)off'
-/home/floor1/StorageRoom/Temperature 'temperature':'(double)19.799999' 'device_id':'(string)0'
+/home/floor1/StorageRoom/Temperature 'temperature':'(double)19.799999'
+    'device_id':'(string)0'
 /home/floor1/LivingRoom/Heater2 'status':'(string)off'
 
 To display all sensors in the Living room and their status:
@@ -204,7 +208,8 @@ http://192.168.0.240:6666/home/floor1/LivingRoom
 >output:
 
 /home/floor1/LivingRoom/TurnOffHeaters
-/home/floor1/LivingRoom/Temperature 'temperature':'(double)20.700001' 'device_id':'(string)2'
+/home/floor1/LivingRoom/Temperature 'temperature':'(double)20.700001'
+    'device_id':'(string)2'
 /home/floor1/LivingRoom/Heater1 'status':'(string)off'
 /home/floor1/LivingRoom/Heater2 'status':'(string)off'
 
@@ -215,9 +220,21 @@ http://192.168.0.240:6666/home/floor1/LivingRoom/Heater1
 
 /home/floor1/LivingRoom/Heater1 'status':'(string)off'
 
-to activate the Heater in the Living room on floor 1:
+To display all status updates for the heater in the Living room:
+http://192.168.0.240:6666/home/floor1/LivingRoom/Heater1?history=1
+
+>output:
+
+/home/floor1/LivingRoom/Heater1 'status':'(string)off'
+    'rest.timestamp':'(string)2016-06-21 14-16-14'
+/home/floor1/LivingRoom/Heater1 'status':'(string)on'
+    'rest.timestamp':'(string)2016-06-21 14-16-04'
+/home/floor1/LivingRoom/Heater1 'status':'(string)off'
+    'rest.timestamp':'(string)2016-06-21 14-15-39'
+
+To activate the Heater in the Living room on floor 1:
 http://192.168.0.240:6666/home/floor1/LivingRoom/Heater?command=(string)on
 
-to activate scene "TurnHeatersOff":
+To activate scene "TurnHeatersOff":
 http://192.168.0.240:6666/home/floor1/LivingRoom/TurnHeatersOff
     ?command=(string)activate

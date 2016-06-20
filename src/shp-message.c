@@ -748,7 +748,7 @@ shp_message_get_name (ShpMessage * msg)
 }
 
 const char*
-shp_message_get_source_path (ShpMessage * msg)
+shp_message_get_source_path (const ShpMessage * msg)
 {
   ShpMessagePrivate *priv;
   g_return_val_if_fail (IS_SHP_MESSAGE (msg), NULL);
@@ -759,7 +759,7 @@ shp_message_get_source_path (ShpMessage * msg)
 }
 
 const char*
-shp_message_get_destination_path (ShpMessage * msg)
+shp_message_get_destination_path (const ShpMessage * msg)
 {
   ShpMessagePrivate *priv;
   g_return_val_if_fail (IS_SHP_MESSAGE (msg), NULL);
@@ -811,4 +811,37 @@ shp_message_to_string (ShpMessage * msg)
 
   g_hash_table_foreach (priv->values, print_pair, str);
   return g_string_free (str, FALSE);
+}
+
+ShpMessage*
+shp_message_copy (const ShpMessage * message)
+{
+  ShpMessage *result;
+  ShpMessagePrivate *opriv;
+  ShpMessagePrivate *priv;
+  GHashTableIter iter;
+  gpointer key, value;
+
+  g_return_val_if_fail (IS_SHP_MESSAGE (message), NULL);
+
+  opriv = message->priv;
+
+  result = g_object_new (SHP_MESSAGE_TYPE, "source-path",
+      shp_message_get_source_path (message), "destination-path",
+      shp_message_get_destination_path (message), NULL);
+
+  priv = result->priv;
+
+  g_hash_table_iter_init (&iter, opriv->values);
+  while (g_hash_table_iter_next (&iter, &key, &value)) {
+    const _ShpValue *src_value = value;
+    _ShpValue *dest_value = g_new0 (_ShpValue, 1);
+
+    g_value_init (&dest_value->value, G_VALUE_TYPE (&src_value->value));
+    g_value_copy (&src_value->value, &dest_value->value);
+
+    g_hash_table_insert (priv->values, g_strdup ((gchar *)key), dest_value);
+  }
+
+  return result;
 }

@@ -34,6 +34,8 @@
 
 #define DEFAULT_PORT 8080
 
+#define MAX_HISTORY_SIZE 100
+
 enum
 {
   PROP_0,
@@ -83,7 +85,10 @@ static void
 shp_rest_init (ShpRest * self)
 {
   self->port = DEFAULT_PORT;
-  self->devices = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  self->devices = g_hash_table_new_full (g_str_hash, g_str_equal, g_free,
+      g_object_unref);
+  self->history = g_hash_table_new_full (g_str_hash, g_str_equal, g_free,
+      (GDestroyNotify) g_ptr_array_unref);
   g_mutex_init (&self->mutex);
 }
 
@@ -92,6 +97,7 @@ shp_rest_finalize (GObject * object)
 {
   ShpRest *self = SHP_REST (object);
   g_hash_table_unref (self->devices);
+  g_hash_table_unref (self->history);
   g_mutex_clear (&self->mutex);
 }
 
@@ -233,27 +239,62 @@ handler (GThreadedSocketService * service, GSocketConnection * connection,
   } else {
     /* create request based on input command */
     ShpMessage *event;
-    gchar *event_str;
 
     /* first check if requested path is valid and we know about it */
-    if (!g_hash_table_contains (self->devices, unescaped)) {
-      send_error (out, 400, "Invalid request");
-      goto out;
-    }
+    g_mutex_lock (&self->mutex);
+    event = g_hash_table_lookup (self->devices, unescaped);
+    if (event)
+      event = g_object_ref (event);
+    g_mutex_unlock (&self->mutex);
 
-    event = shp_message_new_command_from_string (unescaped, query);
     if (!event) {
       send_error (out, 400, "Invalid request");
       goto out;
     }
 
-    g_string_append (output, "HTTP/1.0 200 OK\r\n\r\n");
+    if (g_strrstr (query, "history=1")) {
+      gchar *event_str;
+      GPtrArray *arr;
 
-    event_str = shp_message_to_string (event);
-    g_debug ("rest: about to post: %s", event_str);
-    g_free (event_str);
+      g_string_append (output, "HTTP/1.0 200 OK\r\n");
+      g_string_append (output, "Content-Type: text/plain\r\n\r\n");
 
-    shp_component_post_message (SHP_COMPONENT (self), event);
+      event_str = shp_message_to_string (event);
+      g_string_append_printf (output, "%s\n\r", event_str);
+      g_free (event_str);
+
+      g_object_unref (event);
+
+      arr = g_hash_table_lookup (self->history, unescaped);
+      if (arr) {
+        gint i;
+        for (i = 0; i < arr->len; i++) {
+          event = g_ptr_array_index (arr, i);
+          event_str = shp_message_to_string (event);
+          g_string_append_printf (output, "%s\n\r", event_str);
+          g_free (event_str);
+        }
+      }
+    } else {
+      gchar *event_str;
+
+      g_object_unref (event);
+
+      event = shp_message_new_command_from_string (unescaped, query);
+      if (!event) {
+        send_error (out, 400, "Invalid request");
+        goto out;
+      }
+
+      g_string_append (output, "HTTP/1.0 200 OK\r\n");
+      g_string_append (output, "Content-Type: text/plain\r\n\r\n");
+
+      event_str = shp_message_to_string (event);
+      g_debug ("rest: about to post: %s", event_str);
+      g_free (event_str);
+
+      shp_component_post_message (SHP_COMPONENT (self), event);
+    }
   }
 
   g_free (unescaped);
@@ -339,10 +380,13 @@ message_received_any (ShpSlavePlugin * plugin, ShpBus * bus,
 {
   ShpRest *self = SHP_REST (plugin);
   const gchar *source_path;
+  ShpMessage *new_event;
+  ShpMessage *old_event;
+  gchar *timestamp;
+  time_t t = time (NULL);
+  struct tm *tm_struct = localtime (&t);
 
   g_debug ("rest: received event");
-
-  if (self);
 
   source_path = shp_message_get_source_path (message);
   if (!source_path) {
@@ -351,9 +395,37 @@ message_received_any (ShpSlavePlugin * plugin, ShpBus * bus,
   }
 
   g_debug ("rest: storing event");
+
+  /* copy event and add timestamp to it */
+  new_event = shp_message_copy (message);
+  timestamp = g_strdup_printf ("%d-%02d-%02d %02d-%02d-%02d",
+      tm_struct->tm_year + 1900, tm_struct->tm_mon + 1, tm_struct->tm_mday,
+      tm_struct->tm_hour, tm_struct->tm_min, tm_struct->tm_sec);
+  shp_message_add_string (new_event, "rest.timestamp", timestamp);
+  g_free (timestamp);
+
   g_mutex_lock (&self->mutex);
+
+  /* remember old event if present */
+  old_event = g_hash_table_lookup (self->devices, source_path);
+  if (old_event) {
+    GPtrArray *arr;
+
+    if (!g_hash_table_contains (self->history, source_path)) {
+      arr = g_ptr_array_new ();
+      g_hash_table_insert (self->history, g_strdup (source_path), arr);
+    } else
+      arr = g_hash_table_lookup (self->history, source_path);
+
+    g_ptr_array_insert (arr, 0, g_object_ref (old_event));
+    if (arr->len > MAX_HISTORY_SIZE)
+      g_ptr_array_set_size (arr, MAX_HISTORY_SIZE);
+  }
+
+  /* replace olf event with new one */
   g_hash_table_insert (self->devices, g_strdup (source_path),
-      g_object_ref (message));
+      new_event);
+
   g_mutex_unlock (&self->mutex);
 }
 
