@@ -16,7 +16,8 @@ libtelldus_la_LIBADD=-ltelldus-core
 libtelldus_la_LDFLAGS=-module -avoid-version -shared
 
 librest_la_SOURCES = \
-        shp-rest.c
+        shp-rest.c \
+	shp-json.c
 librest_la_CFLAGS = \
         $(GLIB_CFLAGS) \
         $(GOBJECT_CFLAGS) \

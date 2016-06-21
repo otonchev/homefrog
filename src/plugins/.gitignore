@@ -24,3 +24,5 @@ libraspberrygpiotemp_la-shp-base1wire.lo
 libraspberrygpiotemp_la-shp-base1wire.o
 libraspberrygpiotemp_la-shp-raspberrygpiotemp.lo
 libraspberrygpiotemp_la-shp-raspberrygpiotemp.o
+librest_la-shp-json.lo
+librest_la-shp-json.o

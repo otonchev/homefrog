@@ -29,6 +29,7 @@
 #include "../shp-message.h"
 #include "../shp-plugin-factory.h"
 #include "shp-rest.h"
+#include "shp-json.h"
 
 #define NAME "rest"
 
@@ -151,8 +152,37 @@ typedef struct _ResponseData ResponseData;
 struct _ResponseData
 {
   gchar *path;
-  GString *output;
+  ShpJsonNode *node;
 };
+
+static void
+build_object (const gchar * name, const GValue * value, gpointer user_data)
+{
+  ShpJsonNode *node = (ShpJsonNode *)user_data;
+  ShpJsonNode *child = NULL;
+
+  switch (G_VALUE_TYPE (value)) {
+    case G_TYPE_INT:
+      child = shp_json_node_new_number (name, g_value_get_int (value));
+      break;
+    case G_TYPE_DOUBLE:
+      child = shp_json_node_new_number (name, g_value_get_double (value));
+      break;
+    case G_TYPE_BOOLEAN:
+      child = shp_json_node_new_boolean (name, g_value_get_boolean (value));
+      break;
+    case G_TYPE_STRING:
+      child = shp_json_node_new_string (name, g_value_get_string (value));
+      break;
+    default:
+      g_debug ("rest: not supported type: %s",
+          g_type_name (G_VALUE_TYPE (value)));
+      break;
+  }
+
+  if (child)
+    shp_json_node_append_element (node, child);
+}
 
 static void
 build_response (gpointer key, gpointer val, gpointer data)
@@ -160,14 +190,15 @@ build_response (gpointer key, gpointer val, gpointer data)
   ResponseData *response_data = (ResponseData *)data;
   gchar *path = key;
   ShpMessage *event = SHP_MESSAGE (val);
-  gchar *event_str;
+  ShpJsonNode *node;
 
   if (!g_str_has_prefix (path, response_data->path))
     return;
 
-  event_str = shp_message_to_string (event);
-  g_string_append_printf (response_data->output, "%s\n\r", event_str);
-  g_free (event_str);
+  node = shp_json_node_new_object (shp_message_get_source_path (event));
+  shp_json_node_append_element (response_data->node, node);
+
+  shp_message_foreach (event, build_object, node);
 }
 
 static gboolean
@@ -223,12 +254,16 @@ handler (GThreadedSocketService * service, GSocketConnection * connection,
   if (query == NULL) {
     /* no query, just collect data for all sensors belonging to requested
      * path */
+    ShpJsonNode *node;
     ResponseData *response_data;
 
-    g_string_append (output, "HTTP/1.0 200 OK\r\n\r\n");
+    g_string_append (output, "HTTP/1.0 200 OK\r\n");
+    g_string_append (output, "Content-Type: application/json\r\n\r\n");
+
+    node = shp_json_node_new_object (NULL);
 
     response_data = g_new0 (ResponseData, 1);
-    response_data->output = output;
+    response_data->node = node;
     response_data->path = unescaped;
 
     g_mutex_lock (&self->mutex);
@@ -236,6 +271,9 @@ handler (GThreadedSocketService * service, GSocketConnection * connection,
     g_mutex_unlock (&self->mutex);
 
     g_free (response_data);
+
+    g_string_append (output, shp_json_node_to_string (node));
+    shp_json_node_free (node);
   } else {
     /* create request based on input command */
     ShpMessage *event;
@@ -257,7 +295,7 @@ handler (GThreadedSocketService * service, GSocketConnection * connection,
       GPtrArray *arr;
 
       g_string_append (output, "HTTP/1.0 200 OK\r\n");
-      g_string_append (output, "Content-Type: text/plain\r\n\r\n");
+      g_string_append (output, "Content-Type: application/json\r\n\r\n");
 
       event_str = shp_message_to_string (event);
       g_string_append_printf (output, "%s\n\r", event_str);
