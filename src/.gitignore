@@ -15,3 +15,7 @@ homefrog-shp-scene.o
 homefrog-shp-slave-plugin.o
 homefrog-shp-complextype.o
 homefrog-shp-complextype-compare.o
+homefrog-shp-http.o
+homefrog-shp-json.o
+librest_la-shp-json.lo
+librest_la-shp-json.o

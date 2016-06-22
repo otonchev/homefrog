@@ -28,8 +28,9 @@
 
 #include "../shp-message.h"
 #include "../shp-plugin-factory.h"
+#include "../shp-http.h"
 #include "shp-rest.h"
-#include "shp-json.h"
+#include "../shp-json.h"
 
 #define NAME "rest"
 
@@ -39,13 +40,24 @@
 
 enum
 {
+  SIGNAL_ADD_PATH,
+  LAST_SIGNAL
+};
+
+enum
+{
   PROP_0,
-  PROP_PORT,
+  PROP_HTTP,
   PROP_LAST
 };
 
+static void add_device_path (ShpRest * rest, gchar * path);
+
 static gboolean shp_rest_plugin_start (ShpComponent * component);
 static gboolean shp_rest_plugin_stop (ShpComponent * component);
+
+static void handler (ShpHttpRequest type, const gchar * path,
+    const gchar * query, GSocketConnection * connection, gpointer user_data);
 
 static void message_received_any (ShpSlavePlugin * plugin, ShpBus * bus,
       ShpMessage * message);
@@ -57,6 +69,8 @@ static void shp_rest_set_property (GObject * object, guint propid,
     const GValue * value, GParamSpec * pspec);
 
 G_DEFINE_TYPE (ShpRest, shp_rest, SHP_SLAVE_PLUGIN_TYPE);
+
+static guint shp_rest_signals[LAST_SIGNAL] = { 0 };
 
 static void
 shp_rest_class_init (ShpRestClass * klass)
@@ -74,12 +88,18 @@ shp_rest_class_init (ShpRestClass * klass)
   component_class->start = shp_rest_plugin_start;
   component_class->stop = shp_rest_plugin_stop;
 
+  shp_rest_signals[SIGNAL_ADD_PATH] = g_signal_new ("add-device-path",
+      G_TYPE_FROM_CLASS (klass), G_SIGNAL_RUN_LAST,
+      G_STRUCT_OFFSET (ShpRestClass, add_device_path),
+      NULL, NULL, g_cclosure_marshal_generic, G_TYPE_NONE, 1, G_TYPE_STRING);
+
+  klass->add_device_path = add_device_path;
+
   SHP_SLAVE_PLUGIN_CLASS (klass)->message_received_any = message_received_any;
 
-  g_object_class_install_property (gobject_class, PROP_PORT,
-      g_param_spec_int ("port", "Port number",
-          "Port to listen on for new connections",
-          0, G_MAXINT, DEFAULT_PORT, G_PARAM_READWRITE));
+  g_object_class_install_property (gobject_class, PROP_HTTP,
+      g_param_spec_object ("http", "The HTTP daemon",
+          "The HTTP daemon", SHP_HTTP_TYPE, G_PARAM_READWRITE));
 }
 
 static void
@@ -99,6 +119,7 @@ shp_rest_finalize (GObject * object)
   ShpRest *self = SHP_REST (object);
   g_hash_table_unref (self->devices);
   g_hash_table_unref (self->history);
+  g_object_unref (self->http);
   g_mutex_clear (&self->mutex);
 }
 
@@ -109,8 +130,8 @@ shp_rest_get_property (GObject * object, guint propid, GValue * value,
   ShpRest *self = SHP_REST (object);
 
   switch (propid) {
-    case PROP_PORT:
-      g_value_set_int (value, self->port);
+    case PROP_HTTP:
+      g_value_set_object (value, self->http);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, propid, pspec);
@@ -124,13 +145,29 @@ shp_rest_set_property (GObject * object, guint propid,
   ShpRest *self = SHP_REST (object);
 
   switch (propid) {
-    case PROP_PORT:
-      self->port = g_value_get_int (value);
-      g_debug ("rest: setting port: %d", self->port);
+    case PROP_HTTP:
+      if (self->http)
+        g_object_unref (self->http);
+      self->http = g_value_get_object (value);
+      if (self->http)
+        shp_http_add_path (self->http, "/home*", handler, g_object_ref (self),
+            g_object_unref);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, propid, pspec);
   }
+}
+
+static void
+add_device_path (ShpRest * self, gchar * path)
+{
+  g_return_if_fail (IS_SHP_REST (self));
+
+  g_debug ("rest: adding path: %s", path);
+
+  if (self->http)
+    shp_http_add_path (self->http, path, handler, g_object_ref (self),
+        g_object_unref);
 }
 
 static void
@@ -202,53 +239,20 @@ json_builder_add_device_objects (gpointer key, gpointer val, gpointer data)
   shp_message_foreach (event, json_builder_add_event_elements, node);
 }
 
-static gboolean
-handler (GThreadedSocketService * service, GSocketConnection * connection,
-    GSocketListener * listener, gpointer user_data)
+static void
+handler (ShpHttpRequest type, const gchar * path, const gchar * query,
+    GSocketConnection * connection, gpointer user_data)
 {
   ShpRest *self = SHP_REST (user_data);
   GOutputStream *out;
-  GInputStream *in;
-  GDataInputStream *data;
-  gchar *line;
-  gchar *escaped;
-  gchar *unescaped;
-  gchar *query;
-  gchar *tmp;
   GString *output;
   gchar *output_str;
 
   g_debug ("rest: incomming connection");
 
-  in = g_io_stream_get_input_stream (G_IO_STREAM (connection));
   out = g_io_stream_get_output_stream (G_IO_STREAM (connection));
 
-  data = g_data_input_stream_new (in);
-
-  line = g_data_input_stream_read_line (data, NULL, NULL, NULL);
-
-  if (line == NULL) {
-    send_error (out, 400, "Invalid request");
-    goto out;
-  }
-
-  if (!g_str_has_prefix (line, "GET ")) {
-    send_error (out, 501, "Only GET method is supported");
-    goto out;
-  }
-
-  escaped = line + 4; /* Skip "GET " */
-
-  tmp = strchr (escaped, ' ');
-  if (tmp != NULL)
-    *tmp = 0;
-
-  query = strchr (escaped, '?');
-  if (query != NULL)
-    *query++ = 0;
-
-  unescaped = g_uri_unescape_string (escaped, NULL);
-  g_debug ("rest: path: %s, query: %s", unescaped, query);
+  g_debug ("rest: path: %s, query: %s", path, query);
 
   output = g_string_new (NULL);
 
@@ -265,7 +269,7 @@ handler (GThreadedSocketService * service, GSocketConnection * connection,
 
     response_data = g_new0 (ResponseData, 1);
     response_data->node = node;
-    response_data->path = unescaped;
+    response_data->path = (gchar *)path;
 
     g_mutex_lock (&self->mutex);
     g_hash_table_foreach (self->devices, json_builder_add_device_objects,
@@ -282,7 +286,7 @@ handler (GThreadedSocketService * service, GSocketConnection * connection,
 
     /* first check if requested path is valid and we know about it */
     g_mutex_lock (&self->mutex);
-    event = g_hash_table_lookup (self->devices, unescaped);
+    event = g_hash_table_lookup (self->devices, path);
     if (event)
       event = g_object_ref (event);
     g_mutex_unlock (&self->mutex);
@@ -302,7 +306,7 @@ handler (GThreadedSocketService * service, GSocketConnection * connection,
       g_string_append (output, "Content-Type: application/json\r\n\r\n");
 
       node = shp_json_node_new_object (NULL);
-      array_node = shp_json_node_new_array (unescaped);
+      array_node = shp_json_node_new_array (path);
       shp_json_node_append_element (node, array_node);
 
       object = shp_json_node_new_object (NULL);
@@ -311,7 +315,7 @@ handler (GThreadedSocketService * service, GSocketConnection * connection,
 
       g_object_unref (event);
 
-      arr = g_hash_table_lookup (self->history, unescaped);
+      arr = g_hash_table_lookup (self->history, path);
       if (arr) {
         gint i;
         for (i = 0; i < arr->len; i++) {
@@ -329,7 +333,7 @@ handler (GThreadedSocketService * service, GSocketConnection * connection,
 
       g_object_unref (event);
 
-      event = shp_message_new_command_from_string (unescaped, query);
+      event = shp_message_new_command_from_string (path, query);
       if (!event) {
         send_error (out, 400, "Invalid request");
         goto out;
@@ -346,50 +350,12 @@ handler (GThreadedSocketService * service, GSocketConnection * connection,
     }
   }
 
-  g_free (unescaped);
-  g_free (line);
-
   output_str = g_string_free (output, FALSE);
   g_output_stream_write_all (out, output_str, strlen (output_str),
       NULL, NULL, NULL);
   g_free (output_str);
-
 out:
-  g_object_unref (data);
-  return TRUE;
-}
-
-static gboolean
-start_service (ShpRest * self)
-{
-  GSocketService *service;
-  GError *error = NULL;
-
-  service = g_threaded_socket_service_new (10);
-  if (!g_socket_listener_add_inet_port (G_SOCKET_LISTENER (service),
-      self->port, NULL, &error)) {
-    g_warning ("rest: unable to start service: %s\n", error->message);
-    g_clear_error (&error);
-    g_socket_service_stop (service);
-    g_object_unref (service);
-    return FALSE;
-  }
-
-  g_debug ("rest: Http server listening on port %d", self->port);
-
-  g_signal_connect (service, "run", G_CALLBACK (handler), self);
-
-  self->service = service;
-
-  return TRUE;
-}
-
-static void
-stop_service (ShpRest * self)
-{
-  g_socket_service_stop (self->service);
-  g_object_unref (self->service);
-  self->service = NULL;
+  return;
 }
 
 static gboolean
@@ -401,8 +367,7 @@ shp_rest_plugin_start (ShpComponent * component)
   self = SHP_REST (component);
   klass = SHP_COMPONENT_CLASS (shp_rest_parent_class);
 
-  if (!start_service (self))
-    return FALSE;
+  shp_http_start (self->http);
 
   /* chain up to parent now */
   return klass->start (component);
@@ -417,7 +382,7 @@ shp_rest_plugin_stop (ShpComponent * component)
   self = SHP_REST (component);
   klass = SHP_COMPONENT_CLASS (shp_rest_parent_class);
 
-  stop_service (self);
+  shp_http_stop (self->http);
 
   /* chain up to parent now */
   return klass->stop (component);

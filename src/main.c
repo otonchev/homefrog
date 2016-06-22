@@ -24,6 +24,7 @@
 #include "shp-complextype-factory.h"
 #include "shp-component.h"
 #include "shp-group.h"
+#include "shp-http.h"
 #include "shp-message.h"
 #include "shp-plugin-factory.h"
 #include "shp-rule.h"
@@ -83,24 +84,55 @@ main (int argc, char *argv[])
     ShpCondition *condition_temp;
     ShpCondition *condition_time;
     ShpComplextype *complex_type;
+    ShpHttp *http;
     ShpPlugin *rest;
     ShpPlugin *timer;
     ShpPlugin *temperature;
+    ShpPlugin *temperature2;
+    ShpPlugin *temperature3;
+    ShpPlugin *temperature4;
+    ShpPlugin *temperature5;
     ShpPlugin *telldus;
 
     /* load REST plugin */
+    http = shp_http_new (6666);
     rest = shp_plugin_factory_create ("rest", NULL);
-    g_object_set (G_OBJECT (rest), "port", 6666, NULL);
+    g_object_set (G_OBJECT (rest), "http", http, NULL);
+    g_signal_emit_by_name (G_OBJECT (rest), "add-device-path", "/home*");
 
     /* load timer */
     timer = shp_plugin_factory_create ("timer", "/clock/timer");
 
-    /* load ds1820digitemp plugin for obtaining temperature readings */
+    /* load ds1820digitemp plugins for obtaining temperature readings */
     temperature = shp_plugin_factory_create ("ds1820digitemp",
         "/home/floor1/LivingRoom/Temperature");
     g_object_set (G_OBJECT (temperature), "config-dir", "/home/pi/digitemp/",
         NULL);
     g_object_set (G_OBJECT (temperature), "device-id", "2", NULL);
+
+    temperature2 = shp_plugin_factory_create ("ds1820digitemp",
+        "/home/floor1/Garage/Temperature");
+    g_object_set (G_OBJECT (temperature2), "config-dir", "/home/pi/digitemp/",
+        NULL);
+    g_object_set (G_OBJECT (temperature2), "device-id", "1", NULL);
+
+    temperature3 = shp_plugin_factory_create ("ds1820digitemp",
+        "/home/floor1/StorageRoom/Temperature");
+    g_object_set (G_OBJECT (temperature3), "config-dir", "/home/pi/digitemp/",
+        NULL);
+    g_object_set (G_OBJECT (temperature3), "device-id", "0", NULL);
+
+    temperature4 = shp_plugin_factory_create ("ds1820digitemp",
+        "/home/floor1/Bedroom1/Temperature");
+    g_object_set (G_OBJECT (temperature4), "config-dir", "/home/pi/digitemp/",
+        NULL);
+    g_object_set (G_OBJECT (temperature4), "device-id", "3", NULL);
+
+    temperature5 = shp_plugin_factory_create ("ds1820digitemp",
+        "/home/floor1/Bedroom2/Temperature");
+    g_object_set (G_OBJECT (temperature5), "config-dir", "/home/pi/digitemp/",
+        NULL);
+    g_object_set (G_OBJECT (temperature5), "device-id", "4", NULL);
 
     /* load telldus plugin for controlling heater */
     telldus = shp_plugin_factory_create ("telldus",
@@ -116,6 +148,10 @@ main (int argc, char *argv[])
     shp_group_add (group, SHP_COMPONENT (rest));
     shp_group_add (group, SHP_COMPONENT (timer));
     shp_group_add (group, SHP_COMPONENT (temperature));
+    shp_group_add (group, SHP_COMPONENT (temperature2));
+    shp_group_add (group, SHP_COMPONENT (temperature3));
+    shp_group_add (group, SHP_COMPONENT (temperature4));
+    shp_group_add (group, SHP_COMPONENT (temperature5));
     shp_group_add (group, SHP_COMPONENT (telldus));
 
     /* create scene with one event */

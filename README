@@ -82,6 +82,7 @@ room and the time:
     ShpGroup *group;
     ShpController *controller;
     ShpScene *scene;
+    ShpHttp *http;
     ShpRule *rule;
     ShpMessage *event;
     ShpCondition *condition_temp;
@@ -93,8 +94,10 @@ room and the time:
     ShpPlugin *telldus;
 
     /* load REST plugin */
+    http = shp_http_new (6666);
     rest = shp_plugin_factory_create ("rest", NULL);
-    g_object_set (G_OBJECT (rest), "port", 6666, NULL);
+    g_object_set (G_OBJECT (rest), "http", http, NULL);
+    g_signal_emit_by_name (G_OBJECT (rest), "add-device-path", "/home*");
 
     /* load timer */
     timer = shp_plugin_factory_create ("timer", "/clock/timer");

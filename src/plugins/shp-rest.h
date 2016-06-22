@@ -49,14 +49,15 @@ struct _ShpRest {
   GHashTable *devices;
   GHashTable *history;
   gint port;
-  GSocketService *service;
   GMutex mutex;
+  ShpHttp *http;
 };
 
 struct _ShpRestClass {
   ShpSlavePluginClass parent_class;
 
   /*< private >*/
+  void (*add_device_path) (ShpRest * rest, gchar * path);
 };
 
 void shp_plugin_register (void);

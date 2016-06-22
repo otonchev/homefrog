@@ -20,6 +20,8 @@ homefrog_SOURCES = \
 	shp-controller.c \
 	shp-condition.c \
 	shp-group.c \
+	shp-http.c \
+	shp-json.c \
 	shp-message.c \
 	shp-plugin.c \
 	shp-plugin-factory.c \
