@@ -50,8 +50,6 @@ struct _ShpTelldusClass {
   /*< private >*/
 };
 
-void shp_plugin_register (void);
-
 GType shp_telldus_get_type (void);
 
 G_END_DECLS

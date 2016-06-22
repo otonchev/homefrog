@@ -4,7 +4,8 @@ lib_LTLIBRARIES = \
 	libtelldus.la \
 	libscenectl.la \
 	libtimer.la \
-	libraspberrygpiotemp.la
+	libraspberrygpiotemp.la \
+	libgrovedust.la
 
 libtelldus_la_SOURCES = \
 	shp-telldus.c
@@ -14,6 +15,17 @@ libtelldus_la_CFLAGS = \
         -Werror -Wunused -Wall
 libtelldus_la_LIBADD=-ltelldus-core
 libtelldus_la_LDFLAGS=-module -avoid-version -shared
+
+libgrovedust_la_SOURCES = \
+	air_utils.c \
+	lngpio.c \
+        shp-grovedust.c
+libgrovedust_la_CFLAGS = \
+        $(GLIB_CFLAGS) \
+        $(GOBJECT_CFLAGS) \
+        -Werror -Wunused -Wall
+libgrovedust_la_LIBADD=
+libgrovedust_la_LDFLAGS=-module -avoid-version -shared
 
 librest_la_SOURCES = \
         shp-rest.c

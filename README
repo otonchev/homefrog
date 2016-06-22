@@ -290,7 +290,7 @@ http://192.168.0.240:6666/home/floor1/LivingRoom/Heater
     }
 
 To display history of all status updates for a particular sensor:
-http://192.168.0.240:6666/home/floor1/LivingRoom/Temperature?history=1
+http://192.168.0.240:6666/home/floor1/LivingRoom/Temperature?history
 
 >output:
 

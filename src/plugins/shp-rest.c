@@ -296,7 +296,7 @@ handler (ShpHttpRequest type, const gchar * path, const gchar * query,
       goto out;
     }
 
-    if (g_strrstr (query, "history=1")) {
+    if (!g_strcmp0 (query, "history")) {
       ShpJsonNode *node;
       ShpJsonNode *array_node;
       ShpJsonNode *object;
@@ -367,10 +367,13 @@ shp_rest_plugin_start (ShpComponent * component)
   self = SHP_REST (component);
   klass = SHP_COMPONENT_CLASS (shp_rest_parent_class);
 
+  if (!klass->start (component))
+    return FALSE;
+
   shp_http_start (self->http);
 
   /* chain up to parent now */
-  return klass->start (component);
+  return TRUE;
 }
 
 static gboolean

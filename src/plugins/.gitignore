@@ -24,3 +24,10 @@ libraspberrygpiotemp_la-shp-base1wire.lo
 libraspberrygpiotemp_la-shp-base1wire.o
 libraspberrygpiotemp_la-shp-raspberrygpiotemp.lo
 libraspberrygpiotemp_la-shp-raspberrygpiotemp.o
+libgrovedust.la
+libgrovedust_la-air_utils.lo
+libgrovedust_la-air_utils.o
+libgrovedust_la-lngpio.lo
+libgrovedust_la-lngpio.o
+libgrovedust_la-shp-grovedust.lo
+libgrovedust_la-shp-grovedust.o
