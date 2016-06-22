@@ -29,7 +29,7 @@ homefrog_SOURCES = \
 	shp-complextype.c \
 	shp-complextype-compare.c
 
-nodist_shp_SOURCES = $(GENERATED_C)
+nodist_homefrog_SOURCES = $(GENERATED_C)
 noinst_HEADERS = $(GENERATED_H)
 
 homefrog_CFLAGS = \
