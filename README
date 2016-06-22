@@ -12,6 +12,7 @@ All plugins are built and installed separately, they can be found under:
 Plugins are free to load plugin-specific complex data types as well when basic
 types like integer, string, double, etc are not enough.
 
+Plugins are documented in docs/plugins.txt
 
 Features under development:
 ---------------------------
