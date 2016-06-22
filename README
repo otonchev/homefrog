@@ -4,7 +4,7 @@ Current state: C APIs are more or less in place, no documentation yet, tested
 on Raspberry Pi
 
 Code is designed for efficiency and testability, although no unit tests are
-present yet ;-)
+available yet ;-)
 
 All plugins are built and installed separately, they can be found under:
 "src/plugins" for the sources and all .so files are built in
@@ -17,10 +17,14 @@ Plugins are documented in docs/plugins.txt
 Features under development:
 ---------------------------
 
-    * sorting out format for configure files
+    * sorting out format for configure files (so that app can be configured
+          without writing C-code :-))
     * improving REST plugin
     * implementing grovedust plugin for monitoring the air quality in an
           environment(PM2.5)
+    * Web pages (not really started yet, working on necessary underlying
+          infrastructure, although creating simple Web UI can be done with no
+          effort even today)
 
 
 How to build and run:
@@ -154,7 +158,8 @@ room and the time:
 Example 2:
 ----------
 
-Turn off all heaters in the Living room. Extend Example 1 with the lines below:
+Turn off all heaters in the Living room remotely. Extend Example 1 with the
+lines below:
 
 
     /* load telldus plugins for controlling heaters */
@@ -188,6 +193,9 @@ To turn off both heaters simultaneously call
 
 Accessing the REST API:
 -----------------------
+
+The API is provided by the "rest" plugin and returns Json responses.
+It is automatically enabled when the plugin is loaded.
 
 To display all components running on the system:
 http://192.168.0.240:6666/
@@ -237,7 +245,7 @@ http://192.168.0.240:6666/
         }
     }
 
-To display all sensors at in the Living room on the 1st floor:
+To display all sensors in the Living room on the 1st floor:
 http://192.168.0.240:6666/home/floor1/LivingRoom/
 
 >output:
@@ -277,17 +285,17 @@ http://192.168.0.240:6666/home/floor1/LivingRoom/Temperature?history=1
         "/home/floor1/LivingRoom/Temperature":[
             {
                 "rest.timestamp":"2016-06-22 09-32-51",
-                "temperature":20.600000,
+                "temperature":20.800000,
                 "device-id":"2"
             },
             {
                 "rest.timestamp":"2016-06-22 09-31-51",
-                "temperature":20.600000,
+                "temperature":20.800000,
                 "device-id":"2"
             },
             {
                 "rest.timestamp":"2016-06-22 09-30-51",
-                "temperature":20.600000,
+                "temperature":20.800000,
                 "device-id":"2"
             },
             {
