@@ -61,6 +61,9 @@ Available plugins:
     supported properties:
 
       "scene" - type ShpScene, scene to be activated
+
+    trigger events: This plugin is listening for events of the following kind:
+
       "command" - type string, value "activate"
 
 "telldus" - module for or emitting radio frequency signals and thus turning
@@ -75,6 +78,10 @@ Available plugins:
     format:
 
       "status" - type string, value "on" or "off"
+
+    trigger events: This plugin is listening for events of the following kind:
+
+      "command" - type string, value "on" or "off"
 
 "timer" - module for generating time events(normally every second)
 
@@ -102,3 +109,9 @@ Available plugins:
       "aqi" - type integer, Air Quality index
       "ugm3" - type double
       "pcs" - type double
+
+"rest" - providing REST API for managing devices remotely
+
+    supported properties:
+
+      "port" - type integer, Port to listen on for new connections, default 8080
