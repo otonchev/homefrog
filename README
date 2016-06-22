@@ -3,18 +3,23 @@ Homefrog v0.1 - Plugin-based Home Automation framework written in C/GObject
 Current state: C APIs are more or less in place, no documentation yet, tested
 on Raspberry Pi
 
+Code is designed for efficiency and testability, although no unit tests are
+present yet ;-)
+
 All plugins are built and installed separately, they can be found under:
-"src/plugins". The application will automatically load them at startup.
-Plugins are free to load plugin-specific complex data types when basic types
-like integer, string, double, etc are not enough.
+"src/plugins" for the sources and all .so files are built in
+"src/plugins/.libs/". The application will automatically load them at startup.
+Plugins are free to load plugin-specific complex data types as well when basic
+types like integer, string, double, etc are not enough.
 
 
 Features under development:
 ---------------------------
 
     * sorting out format for configure files
-    * improve REST plugin, add JSON support
-    * grovedust plugin for monitoring the air quality in an environment(PM2.5)
+    * improving REST plugin
+    * implementing grovedust plugin for monitoring the air quality in an
+          environment(PM2.5)
 
 
 How to build and run:
@@ -130,7 +135,7 @@ room and the time:
     shp_condition_add_complextype_option (condition_time, "datetime",
         complex_type, SHP_CONDITION_OPERATOR_GT);
 
-    /* add 2 conditions and scene to rule */
+    /* add the 2 conditions and the scene to a rule */
     rule = shp_rule_new ();
     shp_rule_add_condition (rule, condition_temp);
     shp_rule_add_condition (rule, condition_time);
@@ -183,54 +188,136 @@ To turn off both heaters simultaneously call
 Accessing the REST API:
 -----------------------
 
-To display all sensors at home and their status:
-http://192.168.0.240:6666/home
+To display all components running on the system:
+http://192.168.0.240:6666/
 
 >output:
 
-/home/floor1/Bedroom2/Temperature 'temperature':'(double)22.100000'
-    'device_id':'(string)4'
-/home/floor1/LivingRoom/TurnOffHeaters
-/home/floor1/LivingRoom/Temperature 'temperature':'(double)20.700001'
-    'device_id':'(string)2'
-/home/floor1/BedRoom1/Temperature 'temperature':'(double)20.600000'
-    'device_id':'(string)3'
-/home/floor1/Garage/Temperature 'temperature':'(double)16.799999'
-    'device_id':'(string)1'
-/home/floor1/LivingRoom/Heater1 'status':'(string)off'
-/home/floor1/StorageRoom/Temperature 'temperature':'(double)19.799999'
-    'device_id':'(string)0'
-/home/floor1/LivingRoom/Heater2 'status':'(string)off'
+    {
+        "/clock/timer":{
+            "month":6,
+            "rest.timestamp":"2016-06-22 09-25-02",
+            "year":2016,
+            "hour":9,
+            "day":22,
+            "week_day":3,
+            "seconds":2,
+            "minutes":25
+        },
+        "/home/floor1/Garage/Temperature":{
+            "rest.timestamp":"2016-06-22 09-24-56",
+            "temperature":17.100000,
+            "device_id":"1"
+        },
+        "/home/floor1/LivingRoom/Temperature":{
+            "rest.timestamp":"2016-06-22 09-24-56",
+            "temperature":20.600000,
+            "device_id":"2"
+        },
+        "/home/floor1/Bedroom1/Temperature":{
+            "rest.timestamp":"2016-06-22 09-24-56",
+            "temperature":20.500000,
+            "device_id":"3"
+        },
+        "/home/floor1/Bedroom2/Temperature":{
+            "rest.timestamp":"2016-06-22 09-24-56",
+            "temperature":22.200001,
+            "device_id":"4"
+        },
+        "/home/floor1/StorageRoom/Temperature":{
+            "rest.timestamp":"2016-06-22 09-24-56",
+            "temperature":19.400000,
+            "device_id":"0"
+        },
+        "/home/floor1/LivingRoom/Heater":{
+            "status":"on",
+            "rest.timestamp":"2016-06-22 09-24-56"
+        }
+    }
 
-To display all sensors in the Living room and their status:
-http://192.168.0.240:6666/home/floor1/LivingRoom
+To display all sensors at in the Living room on the 1st floor:
+http://192.168.0.240:6666/home/floor1/LivingRoom/
 
 >output:
 
-/home/floor1/LivingRoom/TurnOffHeaters
-/home/floor1/LivingRoom/Temperature 'temperature':'(double)20.700001'
-    'device_id':'(string)2'
-/home/floor1/LivingRoom/Heater1 'status':'(string)off'
-/home/floor1/LivingRoom/Heater2 'status':'(string)off'
+    {
+        "/home/floor1/LivingRoom/Temperature":{
+            "rest.timestamp":"2016-06-22 09-24-56",
+            "temperature":20.600000,
+            "device_id":"2"
+        },
+        "/home/floor1/LivingRoom/Heater":{
+            "status":"on",
+            "rest.timestamp":"2016-06-22 09-24-56"
+        }
+    }
 
 To display status for the Heater in the Living room:
-http://192.168.0.240:6666/home/floor1/LivingRoom/Heater1
+http://192.168.0.240:6666/home/floor1/LivingRoom/Heater
 
 >output:
 
-/home/floor1/LivingRoom/Heater1 'status':'(string)off'
+    {
+        "/home/floor1/LivingRoom/Heater":{
+            "status":"on",
+            "rest.timestamp":"2016-06-22 09-24-56"
+        }
+    }
 
-To display all status updates for the heater in the Living room:
-http://192.168.0.240:6666/home/floor1/LivingRoom/Heater1?history=1
+To display history of all status updates for a particular sensor:
+http://192.168.0.240:6666/home/floor1/LivingRoom/Temperature?history=1
 
 >output:
 
-/home/floor1/LivingRoom/Heater1 'status':'(string)off'
-    'rest.timestamp':'(string)2016-06-21 14-16-14'
-/home/floor1/LivingRoom/Heater1 'status':'(string)on'
-    'rest.timestamp':'(string)2016-06-21 14-16-04'
-/home/floor1/LivingRoom/Heater1 'status':'(string)off'
-    'rest.timestamp':'(string)2016-06-21 14-15-39'
+    {
+        "/home/floor1/LivingRoom/Temperature":[
+            {
+                "rest.timestamp":"2016-06-22 09-32-51",
+                "temperature":20.600000,
+                "device_id":"2"
+            },
+            {
+                "rest.timestamp":"2016-06-22 09-31-51",
+                "temperature":20.600000,
+                "device_id":"2"
+            },
+            {
+                "rest.timestamp":"2016-06-22 09-30-51",
+                "temperature":20.600000,
+                "device_id":"2"
+            },
+            {
+                "rest.timestamp":"2016-06-22 09-29-51",
+                "temperature":20.600000,
+                "device_id":"2"
+            },
+            {
+                "rest.timestamp":"2016-06-22 09-28-51",
+                "temperature":20.600000,
+                "device_id":"2"
+            },
+            {
+                "rest.timestamp":"2016-06-22 09-27-51",
+                "temperature":20.600000,
+                "device_id":"2"
+            },
+            {
+                "rest.timestamp":"2016-06-22 09-26-51",
+                "temperature":20.600000,
+                "device_id":"2"
+            },
+            {
+                "rest.timestamp":"2016-06-22 09-25-51",
+                "temperature":20.600000,
+                "device_id":"2"
+            },
+            {
+                "rest.timestamp":"2016-06-22 09-24-56",
+                "temperature":20.600000,
+                "device_id":"2"
+            }
+        ]
+    }
 
 To activate the Heater in the Living room on floor 1:
 http://192.168.0.240:6666/home/floor1/LivingRoom/Heater?command=(string)on
