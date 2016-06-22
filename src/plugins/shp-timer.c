@@ -119,6 +119,7 @@ send_status (ShpTimer * self)
   shp_message_add_integer (msg, "month", tm_struct->tm_mon + 1);
   shp_message_add_integer (msg, "day", tm_struct->tm_mday);
   shp_message_add_integer (msg, "week_day", tm_struct->tm_wday);
+  shp_message_add_string (msg, "name", shp_component_get_name (component));
 
   complex_type = shp_complextype_factory_create ("timer.datetime");
   shp_complextype_add_integer (complex_type, "hour", tm_struct->tm_hour);

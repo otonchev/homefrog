@@ -187,17 +187,13 @@ shp_component_stop (ShpComponent * component)
 
   klass = SHP_COMPONENT_GET_CLASS (component);
 
-  if (klass->stop == NULL)
-    return FALSE;
-
-  if (priv->bus && !shp_bus_start (priv->bus)) {
-    g_warning ("could not start bus");
-    return FALSE;
+  if (priv->bus && !shp_bus_stop (priv->bus)) {
+    g_warning ("could not stop bus");
+    res = FALSE;
   }
 
-  res = klass->stop (component);
-  if (!res)
-    shp_bus_stop (priv->bus);
+  if (!klass->stop (component))
+    res = FALSE;
 
   priv->started = !(res == TRUE);
   return res;
@@ -216,7 +212,6 @@ shp_component_start (ShpComponent * component)
 {
   ShpComponentPrivate *priv;
   ShpComponentClass *klass;
-  gboolean res;
 
   priv = component->priv;
 
@@ -227,15 +222,19 @@ shp_component_start (ShpComponent * component)
 
   klass = SHP_COMPONENT_GET_CLASS (component);
 
-  if (klass->start == NULL)
+  if (priv->bus && !shp_bus_start (priv->bus)) {
+    g_warning ("component: could not start bus");
     return FALSE;
+  }
 
-  if (priv->bus)
-    shp_bus_start (priv->bus);
+  if (!klass->start (component)) {
+    if (priv->bus)
+      shp_bus_stop (priv->bus);
+    return FALSE;
+  }
 
-  res = klass->start (component);
-  priv->started = (res == TRUE);
-  return res;
+  priv->started = TRUE;
+  return TRUE;
 }
 
 /**
@@ -249,7 +248,7 @@ shp_component_start (ShpComponent * component)
 ShpComponent*
 shp_component_new (ShpBus * bus)
 {
-  g_return_val_if_fail (IS_SHP_BUS (bus), NULL);
+  g_return_val_if_fail (!bus || IS_SHP_BUS (bus), NULL);
 
   g_debug ("creating new component");
 
