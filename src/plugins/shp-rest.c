@@ -156,7 +156,8 @@ struct _ResponseData
 };
 
 static void
-build_object (const gchar * name, const GValue * value, gpointer user_data)
+json_builder_add_event_elements (const gchar * name, const GValue * value,
+    gpointer user_data)
 {
   ShpJsonNode *node = (ShpJsonNode *)user_data;
   ShpJsonNode *child = NULL;
@@ -185,7 +186,7 @@ build_object (const gchar * name, const GValue * value, gpointer user_data)
 }
 
 static void
-build_response (gpointer key, gpointer val, gpointer data)
+json_builder_add_device_objects (gpointer key, gpointer val, gpointer data)
 {
   ResponseData *response_data = (ResponseData *)data;
   gchar *path = key;
@@ -198,7 +199,7 @@ build_response (gpointer key, gpointer val, gpointer data)
   node = shp_json_node_new_object (shp_message_get_source_path (event));
   shp_json_node_append_element (response_data->node, node);
 
-  shp_message_foreach (event, build_object, node);
+  shp_message_foreach (event, json_builder_add_event_elements, node);
 }
 
 static gboolean
@@ -267,7 +268,8 @@ handler (GThreadedSocketService * service, GSocketConnection * connection,
     response_data->path = unescaped;
 
     g_mutex_lock (&self->mutex);
-    g_hash_table_foreach (self->devices, build_response, response_data);
+    g_hash_table_foreach (self->devices, json_builder_add_device_objects,
+        response_data);
     g_mutex_unlock (&self->mutex);
 
     g_free (response_data);
@@ -291,15 +293,21 @@ handler (GThreadedSocketService * service, GSocketConnection * connection,
     }
 
     if (g_strrstr (query, "history=1")) {
-      gchar *event_str;
+      ShpJsonNode *node;
+      ShpJsonNode *array_node;
+      ShpJsonNode *object;
       GPtrArray *arr;
 
       g_string_append (output, "HTTP/1.0 200 OK\r\n");
       g_string_append (output, "Content-Type: application/json\r\n\r\n");
 
-      event_str = shp_message_to_string (event);
-      g_string_append_printf (output, "%s\n\r", event_str);
-      g_free (event_str);
+      node = shp_json_node_new_object (NULL);
+      array_node = shp_json_node_new_array (unescaped);
+      shp_json_node_append_element (node, array_node);
+
+      object = shp_json_node_new_object (NULL);
+      shp_message_foreach (event, json_builder_add_event_elements, object);
+      shp_json_node_append_element (array_node, object);
 
       g_object_unref (event);
 
@@ -308,11 +316,14 @@ handler (GThreadedSocketService * service, GSocketConnection * connection,
         gint i;
         for (i = 0; i < arr->len; i++) {
           event = g_ptr_array_index (arr, i);
-          event_str = shp_message_to_string (event);
-          g_string_append_printf (output, "%s\n\r", event_str);
-          g_free (event_str);
+          object = shp_json_node_new_object (NULL);
+          shp_message_foreach (event, json_builder_add_event_elements, object);
+          shp_json_node_append_element (array_node, object);
         }
       }
+
+      g_string_append (output, shp_json_node_to_string (node));
+      shp_json_node_free (node);
     } else {
       gchar *event_str;
 
