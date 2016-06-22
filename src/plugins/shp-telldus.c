@@ -124,6 +124,7 @@ signal_new_status (ShpTelldus * self, gboolean on)
 
   msg = shp_message_new (shp_component_get_path (component));
   shp_message_add_string (msg, "status", (on) ? "on" : "off");
+  shp_message_add_integer (msg, "device-id", self->device_id);
 
   if (!shp_component_post_message (component, msg))
     g_warning ("could not post message on bus");

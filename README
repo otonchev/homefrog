@@ -208,30 +208,31 @@ http://192.168.0.240:6666/
         "/home/floor1/Garage/Temperature":{
             "rest.timestamp":"2016-06-22 09-24-56",
             "temperature":17.100000,
-            "device_id":"1"
+            "device-id":"1"
         },
         "/home/floor1/LivingRoom/Temperature":{
             "rest.timestamp":"2016-06-22 09-24-56",
             "temperature":20.600000,
-            "device_id":"2"
+            "device-id":"2"
         },
         "/home/floor1/Bedroom1/Temperature":{
             "rest.timestamp":"2016-06-22 09-24-56",
             "temperature":20.500000,
-            "device_id":"3"
+            "device-id":"3"
         },
         "/home/floor1/Bedroom2/Temperature":{
             "rest.timestamp":"2016-06-22 09-24-56",
             "temperature":22.200001,
-            "device_id":"4"
+            "device-id":"4"
         },
         "/home/floor1/StorageRoom/Temperature":{
             "rest.timestamp":"2016-06-22 09-24-56",
             "temperature":19.400000,
-            "device_id":"0"
+            "device-id":"0"
         },
         "/home/floor1/LivingRoom/Heater":{
             "status":"on",
+            "device-id":2,
             "rest.timestamp":"2016-06-22 09-24-56"
         }
     }
@@ -245,10 +246,11 @@ http://192.168.0.240:6666/home/floor1/LivingRoom/
         "/home/floor1/LivingRoom/Temperature":{
             "rest.timestamp":"2016-06-22 09-24-56",
             "temperature":20.600000,
-            "device_id":"2"
+            "device-id":"2"
         },
         "/home/floor1/LivingRoom/Heater":{
             "status":"on",
+            "device-id":2,
             "rest.timestamp":"2016-06-22 09-24-56"
         }
     }
@@ -261,6 +263,7 @@ http://192.168.0.240:6666/home/floor1/LivingRoom/Heater
     {
         "/home/floor1/LivingRoom/Heater":{
             "status":"on",
+            "device-id":2,
             "rest.timestamp":"2016-06-22 09-24-56"
         }
     }
@@ -275,47 +278,47 @@ http://192.168.0.240:6666/home/floor1/LivingRoom/Temperature?history=1
             {
                 "rest.timestamp":"2016-06-22 09-32-51",
                 "temperature":20.600000,
-                "device_id":"2"
+                "device-id":"2"
             },
             {
                 "rest.timestamp":"2016-06-22 09-31-51",
                 "temperature":20.600000,
-                "device_id":"2"
+                "device-id":"2"
             },
             {
                 "rest.timestamp":"2016-06-22 09-30-51",
                 "temperature":20.600000,
-                "device_id":"2"
+                "device-id":"2"
             },
             {
                 "rest.timestamp":"2016-06-22 09-29-51",
                 "temperature":20.600000,
-                "device_id":"2"
+                "device-id":"2"
             },
             {
                 "rest.timestamp":"2016-06-22 09-28-51",
                 "temperature":20.600000,
-                "device_id":"2"
+                "device-id":"2"
             },
             {
                 "rest.timestamp":"2016-06-22 09-27-51",
                 "temperature":20.600000,
-                "device_id":"2"
+                "device-id":"2"
             },
             {
                 "rest.timestamp":"2016-06-22 09-26-51",
                 "temperature":20.600000,
-                "device_id":"2"
+                "device-id":"2"
             },
             {
                 "rest.timestamp":"2016-06-22 09-25-51",
                 "temperature":20.600000,
-                "device_id":"2"
+                "device-id":"2"
             },
             {
                 "rest.timestamp":"2016-06-22 09-24-56",
                 "temperature":20.600000,
-                "device_id":"2"
+                "device-id":"2"
             }
         ]
     }

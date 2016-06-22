@@ -18,7 +18,7 @@
 
 /*
  * This module extracts temperature readings from 1-wire network attached
- * directly to Raspebrry Pi's GPIOTEMP.
+ * directly to Raspberry Pi's GPIOTEMP.
  *
  * cd /sys/bus/w1/devices
  * cd 10-000801b5*
