@@ -213,6 +213,7 @@ handler (GThreadedSocketService * service, GSocketConnection * connection,
   gchar *query;
   gchar *tmp;
   ShpHttpHandler *handler;
+  ShpHttpRequest request;
 
   g_debug ("http: incomming connection");
 
@@ -231,12 +232,18 @@ handler (GThreadedSocketService * service, GSocketConnection * connection,
     goto out;
   }
 
-  if (!g_str_has_prefix (line, "GET ")) {
-    send_error (out, 501, "Only GET method is supported");
+  if (!g_str_has_prefix (line, "GET ") && !g_str_has_prefix (line, "POST ")) {
+    send_error (out, 501, "Only GET and POST method is supported");
     goto out;
   }
 
-  escaped = line + 4; /* Skip "GET " */
+  if (g_str_has_prefix (line, "GET ")) {
+    request = SHP_HTTP_GET;
+    escaped = line + 4; /* Skip "GET " */
+  } else {
+    request = SHP_HTTP_POST;
+    escaped = line + 5; /* Skip "POST " */
+  }
 
   tmp = strchr (escaped, ' ');
   if (tmp != NULL)
@@ -270,7 +277,7 @@ handler (GThreadedSocketService * service, GSocketConnection * connection,
     }
   }
 
-  handler->func (SHP_HTTP_GET, path, query, connection, handler->user_data);
+  handler->func (request, path, query, connection, handler->user_data);
   g_free (path);
 
 out:

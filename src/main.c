@@ -70,7 +70,7 @@ main (int argc, char *argv[])
 
   g_key_file_free (file);
 
-#if 1
+#if 0
   {
     /* Turn Heater in the Living room on floor 1 on if the temperature drops
      * below 17C and time is after 19:45.

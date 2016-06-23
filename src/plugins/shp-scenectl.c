@@ -142,8 +142,6 @@ static void
 message_received (ShpSlavePlugin * plugin, ShpBus * bus,
       ShpMessage * message)
 {
-  gboolean activate;
-  const gchar *command;
   ShpScenectl *self = SHP_SCENECTL (plugin);
 
   g_debug ("scenectl: received event");
@@ -153,17 +151,8 @@ message_received (ShpSlavePlugin * plugin, ShpBus * bus,
     return;
   }
 
-  command = shp_message_get_string (message, "command");
-  g_assert (command != NULL);
-  activate = !g_strcmp0 (command, "activate");
-
-  g_debug ("scenectl: command: %s", command);
-
-  if (activate) {
-    g_debug ("scenectl: activating scene");
-    shp_scene_activate (self->scene);
-  } else
-    g_debug ("scenectl: not activating scene");
+  g_debug ("scenectl: activating scene");
+  shp_scene_activate (self->scene);
 }
 
 static void

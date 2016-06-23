@@ -64,7 +64,7 @@ Available plugins:
 
     trigger events: This plugin is listening for events of the following kind:
 
-      "command" - type string, value "activate"
+      <empty>
 
 "telldus" - module for or emitting radio frequency signals and thus turning
             on/off wall-plug sockets using Tellstick
@@ -82,6 +82,9 @@ Available plugins:
     trigger events: This plugin is listening for events of the following kind:
 
       "command" - type string, value "on" or "off"
+
+    If command is not present, the device will be switched from on to off or
+    vice-versa.
 
 "timer" - module for generating time events(normally every second)
 

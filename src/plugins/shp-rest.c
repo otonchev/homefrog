@@ -240,13 +240,18 @@ json_builder_add_device_objects (gpointer key, gpointer val, gpointer data)
 }
 
 static void
-handler (ShpHttpRequest type, const gchar * path, const gchar * query,
+handler (ShpHttpRequest request, const gchar * path, const gchar * query,
     GSocketConnection * connection, gpointer user_data)
 {
   ShpRest *self = SHP_REST (user_data);
   GOutputStream *out;
   GString *output;
   gchar *output_str;
+
+  if (request != SHP_HTTP_GET && request != SHP_HTTP_POST) {
+    g_warning ("rest: unsupported request type");
+    return;
+  }
 
   g_debug ("rest: incomming connection");
 
@@ -256,7 +261,7 @@ handler (ShpHttpRequest type, const gchar * path, const gchar * query,
 
   output = g_string_new (NULL);
 
-  if (query == NULL) {
+  if (request == SHP_HTTP_GET && query == NULL) {
     /* no query, just collect data for all sensors belonging to requested
      * path */
     ShpJsonNode *node;
@@ -280,7 +285,7 @@ handler (ShpHttpRequest type, const gchar * path, const gchar * query,
 
     g_string_append (output, shp_json_node_to_string (node));
     shp_json_node_free (node);
-  } else {
+  } else if (request == SHP_HTTP_GET) {
     /* create request based on input command */
     ShpMessage *event;
 
@@ -329,25 +334,28 @@ handler (ShpHttpRequest type, const gchar * path, const gchar * query,
       g_string_append (output, shp_json_node_to_string (node));
       shp_json_node_free (node);
     } else {
-      gchar *event_str;
-
+      send_error (out, 400, "Invalid request");
       g_object_unref (event);
-
-      event = shp_message_new_command_from_string (path, query);
-      if (!event) {
-        send_error (out, 400, "Invalid request");
-        goto out;
-      }
-
-      g_string_append (output, "HTTP/1.0 200 OK\r\n");
-      g_string_append (output, "Content-Type: text/plain\r\n\r\n");
-
-      event_str = shp_message_to_string (event);
-      g_debug ("rest: about to post: %s", event_str);
-      g_free (event_str);
-
-      shp_component_post_message (SHP_COMPONENT (self), event);
+      goto out;
     }
+  } else if (request == SHP_HTTP_POST) {
+    gchar *event_str;
+    ShpMessage *event;
+
+    event = shp_message_new_command (path);
+    if (!event) {
+      send_error (out, 400, "Invalid request");
+      goto out;
+    }
+
+    g_string_append (output, "HTTP/1.0 200 OK\r\n");
+    g_string_append (output, "Content-Type: text/plain\r\n\r\n");
+
+    event_str = shp_message_to_string (event);
+    g_debug ("rest: about to post: %s", event_str);
+    g_free (event_str);
+
+    shp_component_post_message (SHP_COMPONENT (self), event);
   }
 
   output_str = g_string_free (output, FALSE);
