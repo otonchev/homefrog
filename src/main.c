@@ -99,7 +99,8 @@ main (int argc, char *argv[])
     /* load REST plugin */
     http = shp_http_new (6666);
     rest = shp_plugin_factory_create ("rest", NULL);
-    /* this file describes how different plugins should be visualised */
+    /* this file is optional and describes how different plugins should be
+     * visualised */
     g_object_set (G_OBJECT (rest), "config-file", "src/homefrog-rest.config",
         NULL);
     g_object_set (G_OBJECT (rest), "http", http, NULL);

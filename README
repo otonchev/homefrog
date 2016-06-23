@@ -19,9 +19,6 @@ Features under development:
 
     * sorting out format for configure files (so that app can be configured
           without writing C-code :-))
-    * improving REST plugin
-    * implementing grovedust plugin for monitoring the air quality in an
-          environment(PM2.5)
     * Web pages (not really started yet, working on necessary underlying
           infrastructure, although creating simple Web UI can be done with no
           effort even today)
@@ -49,13 +46,13 @@ API architecture:
 +---------------------------------------------------------------+
 | Group                                                         |
 |                                                               |
-| +-----------------+  +---------+                              |
-| |                 |  |  Timer  |                              |
-| |   Controller    |  +---------+                              |
-| |                 |       |                                   |
-| +-----------------+       |                                   |
-|          |                |                                   |
-|          v                v                                   |
+| +-----------------+  +---------+       +-----------------+    |
+| |                 |  |  Timer  |       |         +------+|    |
+| |   Controller    |  +---------+       |  REST   | Http ||    |
+| |                 |       |            |         +------+|    |
+| +-----------------+       |            +-----------------+    |
+|          |                |                     |             |
+|          v                v                     v             |
 | +-----------------------------------------------------------+ |
 | |                         EventBUS                          | |
 | +-----------------------------------------------------------+ |
@@ -96,6 +93,10 @@ room and the time:
     /* load REST plugin */
     http = shp_http_new (6666);
     rest = shp_plugin_factory_create ("rest", NULL);
+    /* this file is optional and describes how different plugins should be
+     * visualised */
+    g_object_set (G_OBJECT (rest), "config-file", "src/homefrog-rest.config",
+        NULL);
     g_object_set (G_OBJECT (rest), "http", http, NULL);
     g_signal_emit_by_name (G_OBJECT (rest), "add-device-path", "/home*");
 
@@ -200,69 +201,120 @@ Accessing the REST API:
 The API is provided by the "rest" plugin and returns Json responses.
 It is automatically enabled when the plugin is loaded.
 
-To display all components running on the system:
-GET http://192.168.0.240:6666/
+/web
+----
+
+To get a description on how all the different plugins are to be visualised on
+the Web (all that is generated based on the content of the rest configure file:
+the src/homefrog-rest.config):
+
+GET http://192.168.0.240:6666/web
 
 >output:
 
     {
-        "/clock/timer":{
-            "month":6,
-            "rest.timestamp":"2016-06-22 09-25-02",
-            "year":2016,
-            "hour":9,
-            "day":22,
-            "week_day":3,
-            "seconds":2,
-            "minutes":25,
-            "name":"timer"
+        "ds1820digitemp":{
+            "device-type":"sensor-simple",
+            "display-options":[
+                "temperature":"double",
+                "units":"string"
+            ]
         },
-        "/home/floor1/Garage/Temperature":{
-            "rest.timestamp":"2016-06-22 09-24-56",
-            "temperature":17.100000,
-            "device-id":"1",
+        "telldus":{
+            "device-type":"switch-simple",
+            "display-options":[
+                "status":"string"
+            ]
+        },
+        "scenectl":{
+            "device-type":"scene",
+            "display-options":[
+
+            ]
+        }
+    }
+
+/home*
+------
+
+To display all components running on the system:
+
+GET http://192.168.0.240:6666/home
+
+>output:
+
+    {
+        "/home/floor1/Bedroom2/Temperature":{
+            "units":"C",
+            "device-id":"4",
+            "units_humanized":"Celsius",
+            "rest.timestamp":"2016-06-23 15-28-39",
+            "temperature":25.799999,
             "name":"ds1820digitemp"
         },
         "/home/floor1/LivingRoom/Temperature":{
-            "rest.timestamp":"2016-06-22 09-24-56",
-            "temperature":20.600000,
+            "units":"C",
             "device-id":"2",
+            "units_humanized":"Celsius",
+            "rest.timestamp":"2016-06-23 15-28-39",
+            "temperature":23,
+            "name":"ds1820digitemp"
+        },
+        "/home/floor1/Garage/Temperature":{
+            "units":"C",
+            "device-id":"1",
+            "units_humanized":"Celsius",
+            "rest.timestamp":"2016-06-23 15-28-39",
+            "temperature":19.400000,
             "name":"ds1820digitemp"
         },
         "/home/floor1/Bedroom1/Temperature":{
-            "rest.timestamp":"2016-06-22 09-24-56",
-            "temperature":20.500000,
+            "units":"C",
             "device-id":"3",
+            "units_humanized":"Celsius",
+            "rest.timestamp":"2016-06-23 15-28-39",
+            "temperature":22.900000,
             "name":"ds1820digitemp"
         },
-        "/home/floor1/Bedroom2/Temperature":{
-            "rest.timestamp":"2016-06-22 09-24-56",
-            "temperature":22.200001,
-            "device-id":"4",
-            "name":"ds1820digitemp"
+        "/home/floor1/LivingRoom/AllDevicesOff":{
+            "/home/floor1/LivingRoom/Heater1":"no_name",
+            "/home/floor1/LivingRoom/Heater2":"no_name",
+            "name":"scenectl",
+            "rest.timestamp":"2016-06-23 15-28-39"
+        },
+        "/home/floor1/LivingRoom/Heater1":{
+            "device-id":2,
+            "status":"on",
+            "rest.timestamp":"2016-06-23 15-28-39",
+            "name":"telldus"
         },
         "/home/floor1/StorageRoom/Temperature":{
-            "rest.timestamp":"2016-06-22 09-24-56",
-            "temperature":19.400000,
+            "units":"C",
             "device-id":"0",
+            "units_humanized":"Celsius",
+            "rest.timestamp":"2016-06-23 15-28-39",
+            "temperature":22.400000,
             "name":"ds1820digitemp"
         },
-        "/home/floor1/LivingRoom/Heater":{
-            "status":"on",
-            "device-id":2,
-            "rest.timestamp":"2016-06-22 09-24-56",
+        "/home/floor1/LivingRoom/Heater2":{
+            "device-id":1,
+            "status":"off",
+            "rest.timestamp":"2016-06-23 15-28-39",
             "name":"telldus"
         }
     }
 
 To display all sensors in the Living room on the 1st floor:
+
 GET http://192.168.0.240:6666/home/floor1/LivingRoom/
 
 >output:
 
     {
         "/home/floor1/LivingRoom/Temperature":{
+            "units":"C",
             "rest.timestamp":"2016-06-22 09-24-56",
+            "units_humanized":"Celsius",
             "temperature":20.600000,
             "device-id":"2",
             "name":"ds1820digitemp"
@@ -276,6 +328,7 @@ GET http://192.168.0.240:6666/home/floor1/LivingRoom/
     }
 
 To display status for the Heater in the Living room:
+
 GET http://192.168.0.240:6666/home/floor1/LivingRoom/Heater
 
 >output:
@@ -290,6 +343,7 @@ GET http://192.168.0.240:6666/home/floor1/LivingRoom/Heater
     }
 
 To display history of all status updates for a particular sensor:
+
 GET http://192.168.0.240:6666/home/floor1/LivingRoom/Temperature?history
 
 >output:
@@ -297,54 +351,72 @@ GET http://192.168.0.240:6666/home/floor1/LivingRoom/Temperature?history
     {
         "/home/floor1/LivingRoom/Temperature":[
             {
+                "units":"C",
+                "units_humanized":"Celsius",
                 "rest.timestamp":"2016-06-22 09-32-51",
                 "temperature":20.800000,
                 "device-id":"2",
                 "name":"ds1820digitemp"
             },
             {
+                "units":"C",
+                "units_humanized":"Celsius",
                 "rest.timestamp":"2016-06-22 09-31-51",
                 "temperature":20.800000,
                 "device-id":"2",
                 "name":"ds1820digitemp"
             },
             {
+                "units":"C",
+                "units_humanized":"Celsius",
                 "rest.timestamp":"2016-06-22 09-30-51",
                 "temperature":20.800000,
                 "device-id":"2",
                 "name":"ds1820digitemp"
             },
             {
+                "units":"C",
+                "units_humanized":"Celsius",
                 "rest.timestamp":"2016-06-22 09-29-51",
                 "temperature":20.600000,
                 "device-id":"2",
                 "name":"ds1820digitemp"
             },
             {
+                "units":"C",
+                "units_humanized":"Celsius",
                 "rest.timestamp":"2016-06-22 09-28-51",
                 "temperature":20.600000,
                 "device-id":"2",
                 "name":"ds1820digitemp"
             },
             {
+                "units":"C",
+                "units_humanized":"Celsius",
                 "rest.timestamp":"2016-06-22 09-27-51",
                 "temperature":20.600000,
                 "device-id":"2",
                 "name":"ds1820digitemp"
             },
             {
+                "units":"C",
+                "units_humanized":"Celsius",
                 "rest.timestamp":"2016-06-22 09-26-51",
                 "temperature":20.600000,
                 "device-id":"2",
                 "name":"ds1820digitemp"
             },
             {
+                "units":"C",
+                "units_humanized":"Celsius",
                 "rest.timestamp":"2016-06-22 09-25-51",
                 "temperature":20.600000,
                 "device-id":"2",
                 "name":"ds1820digitemp"
             },
             {
+                "units":"C",
+                "units_humanized":"Celsius",
                 "rest.timestamp":"2016-06-22 09-24-56",
                 "temperature":20.600000,
                 "device-id":"2",
@@ -354,7 +426,9 @@ GET http://192.168.0.240:6666/home/floor1/LivingRoom/Temperature?history
     }
 
 To activate the Heater in the Living room on floor 1:
+
 POST http://192.168.0.240:6666/home/floor1/LivingRoom/Heater
 
 To activate scene "TurnHeatersOff":
+
 POST http://192.168.0.240:6666/home/floor1/LivingRoom/TurnHeatersOff
