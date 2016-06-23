@@ -163,6 +163,8 @@ send_status (ShpBase1wire * self)
   msg = shp_message_new (shp_component_get_path (component));
   shp_message_add_double (msg, "temperature", reading);
   shp_message_add_string (msg, "device-id", self->device_id);
+  shp_message_add_string (msg, "units", "C");
+  shp_message_add_string (msg, "units_humanized", "Celsius");
   shp_message_add_string (msg, "name", shp_component_get_name (component));
 
   if (!shp_component_post_message (component, msg)) {

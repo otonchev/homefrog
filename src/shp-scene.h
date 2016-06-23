@@ -60,6 +60,7 @@ struct _ShpSceneClass {
 ShpScene * shp_scene_new (ShpBus * bus);
 void shp_scene_add_event (ShpScene * scene, ShpMessage * event);
 gboolean shp_scene_activate (ShpScene * scene);
+const GSList *shp_scene_get_events (ShpScene * scene);
 
 GType shp_scene_get_type (void);
 

@@ -186,3 +186,15 @@ shp_scene_activate (ShpScene * scene)
 
   return result;
 }
+
+const GSList*
+shp_scene_get_events (ShpScene * scene)
+{
+  ShpScenePrivate *priv;
+
+  g_return_val_if_fail (IS_SHP_SCENE (scene), NULL);
+
+  priv = scene->priv;
+
+  return priv->events;
+}

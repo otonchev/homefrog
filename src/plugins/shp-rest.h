@@ -51,6 +51,7 @@ struct _ShpRest {
   gint port;
   GMutex mutex;
   ShpHttp *http;
+  gchar *config_file;
 };
 
 struct _ShpRestClass {

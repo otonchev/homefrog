@@ -39,7 +39,7 @@ main (int argc, char *argv[])
   gchar *file_name;
 
   if (argc != 2) {
-    g_critical ("usage: %s path_to_shp_conf_file", argv[0]);
+    g_critical ("usage: %s path_to_homefrog_conf_file", argv[0]);
     exit (1);
   }
 
@@ -93,10 +93,15 @@ main (int argc, char *argv[])
     ShpPlugin *temperature4;
     ShpPlugin *temperature5;
     ShpPlugin *telldus;
+    ShpPlugin *telldus2;
+    ShpPlugin *scenectl;
 
     /* load REST plugin */
     http = shp_http_new (6666);
     rest = shp_plugin_factory_create ("rest", NULL);
+    /* this file describes how different plugins should be visualised */
+    g_object_set (G_OBJECT (rest), "config-file", "src/homefrog-rest.config",
+        NULL);
     g_object_set (G_OBJECT (rest), "http", http, NULL);
     g_signal_emit_by_name (G_OBJECT (rest), "add-device-path", "/home*");
 
@@ -136,12 +141,31 @@ main (int argc, char *argv[])
 
     /* load telldus plugin for controlling heater */
     telldus = shp_plugin_factory_create ("telldus",
-        "/home/floor1/LivingRoom/Heater");
+        "/home/floor1/LivingRoom/Heater1");
     g_object_set (G_OBJECT (telldus), "device-id", 2, NULL);
+
+    telldus2 = shp_plugin_factory_create ("telldus",
+        "/home/floor1/LivingRoom/Heater2");
+    g_object_set (G_OBJECT (telldus2), "device-id", 1, NULL);
+
+    /* create the event bus */
+    bus = shp_bus_new ();
+
+    /* load scenectl plugin for controlling all devices in the Living room
+     * simultaneously through the REST API */
+    scene = shp_scene_new (g_object_ref (bus));
+    event = shp_message_new_command ("/home/floor1/LivingRoom/Heater1");
+    shp_message_add_string (event, "command", "off");
+    shp_scene_add_event (scene, event);
+    event = shp_message_new_command ("/home/floor1/LivingRoom/Heater2");
+    shp_message_add_string (event, "command", "off");
+    shp_scene_add_event (scene, event);
+    scenectl = shp_plugin_factory_create ("scenectl",
+        "/home/floor1/LivingRoom/AllDevicesOff");
+    g_object_set (G_OBJECT (scenectl), "scene", scene, NULL);
 
     /* create the group and add the event bus, the controller and the plugins to
      * it */
-    bus = shp_bus_new ();
     group = shp_group_new (bus);
     controller = shp_controller_new ();
     shp_group_add (group, SHP_COMPONENT (controller));
@@ -153,6 +177,8 @@ main (int argc, char *argv[])
     shp_group_add (group, SHP_COMPONENT (temperature4));
     shp_group_add (group, SHP_COMPONENT (temperature5));
     shp_group_add (group, SHP_COMPONENT (telldus));
+    shp_group_add (group, SHP_COMPONENT (telldus2));
+    shp_group_add (group, SHP_COMPONENT (scenectl));
 
     /* create scene with one event */
     scene = shp_scene_new (g_object_ref (bus));

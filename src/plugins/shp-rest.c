@@ -35,6 +35,7 @@
 #define NAME "rest"
 
 #define DEFAULT_PORT 8080
+#define DEFAULT_CONFIG_FILE NULL
 
 #define MAX_HISTORY_SIZE 100
 
@@ -48,6 +49,7 @@ enum
 {
   PROP_0,
   PROP_HTTP,
+  PROP_CONFIG_FILE,
   PROP_LAST
 };
 
@@ -57,6 +59,8 @@ static gboolean shp_rest_plugin_start (ShpComponent * component);
 static gboolean shp_rest_plugin_stop (ShpComponent * component);
 
 static void handler (ShpHttpRequest type, const gchar * path,
+    const gchar * query, GSocketConnection * connection, gpointer user_data);
+static void web_handler (ShpHttpRequest type, const gchar * path,
     const gchar * query, GSocketConnection * connection, gpointer user_data);
 
 static void message_received_any (ShpSlavePlugin * plugin, ShpBus * bus,
@@ -100,6 +104,10 @@ shp_rest_class_init (ShpRestClass * klass)
   g_object_class_install_property (gobject_class, PROP_HTTP,
       g_param_spec_object ("http", "The HTTP daemon",
           "The HTTP daemon", SHP_HTTP_TYPE, G_PARAM_READWRITE));
+
+  g_object_class_install_property (gobject_class, PROP_CONFIG_FILE,
+      g_param_spec_string ("config-file", "Configure file",
+          "Path to configure file", DEFAULT_CONFIG_FILE, G_PARAM_READWRITE));
 }
 
 static void
@@ -110,6 +118,7 @@ shp_rest_init (ShpRest * self)
       g_object_unref);
   self->history = g_hash_table_new_full (g_str_hash, g_str_equal, g_free,
       (GDestroyNotify) g_ptr_array_unref);
+  self->config_file = g_strdup (DEFAULT_CONFIG_FILE);
   g_mutex_init (&self->mutex);
 }
 
@@ -120,6 +129,7 @@ shp_rest_finalize (GObject * object)
   g_hash_table_unref (self->devices);
   g_hash_table_unref (self->history);
   g_object_unref (self->http);
+  g_free (self->config_file);
   g_mutex_clear (&self->mutex);
 }
 
@@ -132,6 +142,9 @@ shp_rest_get_property (GObject * object, guint propid, GValue * value,
   switch (propid) {
     case PROP_HTTP:
       g_value_set_object (value, self->http);
+      break;
+    case PROP_CONFIG_FILE:
+      g_value_set_string (value, self->config_file);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, propid, pspec);
@@ -150,8 +163,11 @@ shp_rest_set_property (GObject * object, guint propid,
         g_object_unref (self->http);
       self->http = g_value_get_object (value);
       if (self->http)
-        shp_http_add_path (self->http, "/home*", handler, g_object_ref (self),
-            g_object_unref);
+        shp_http_add_path (self->http, "/home*", handler, self, NULL);
+      break;
+    case PROP_CONFIG_FILE:
+      g_free (self->config_file);
+      self->config_file = g_strdup (g_value_get_string (value));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, propid, pspec);
@@ -240,35 +256,150 @@ json_builder_add_device_objects (gpointer key, gpointer val, gpointer data)
 }
 
 static void
+send_ok (GOutputStream * out, ShpJsonNode * node)
+{
+  GString *output;
+  gchar *output_str;
+
+  output = g_string_new (NULL);
+  g_string_append (output, "HTTP/1.0 200 OK\r\n");
+  g_string_append (output, "Content-Type: text/plain\r\n\r\n");
+
+  if (node) {
+    gchar *tmp = shp_json_node_to_string (node);
+    g_string_append (output, tmp);
+    g_free (tmp);
+  }
+
+  output_str = g_string_free (output, FALSE);
+  g_output_stream_write_all (out, output_str, strlen (output_str),
+      NULL, NULL, NULL);
+  g_free (output_str);
+}
+
+static void
+web_handler (ShpHttpRequest request, const gchar * path, const gchar * query,
+    GSocketConnection * connection, gpointer user_data)
+{
+  ShpRest *self = SHP_REST (user_data);
+  GFile *file;
+  GFileInputStream *input_stream;
+  GDataInputStream *data;
+  GError *error = NULL;
+  GOutputStream *out;
+  gchar *line;
+  ShpJsonNode *node;
+
+  out = g_io_stream_get_output_stream (G_IO_STREAM (connection));
+
+  if (request != SHP_HTTP_GET) {
+    g_debug ("rest: unsupported request type");
+    send_error (out, 400, "Invalid request");
+    return;
+  }
+
+  if (self->config_file == NULL) {
+    g_warning ("rest: config file not specified");
+    send_error (out, 500, "Internal server error");
+    return;
+  }
+
+  /* FIXME: load file at start */
+  file = g_file_new_for_path (self->config_file);
+  input_stream = g_file_read (file, NULL, &error);
+  if (!input_stream) {
+    g_warning ("rest: error reading config file: %s", error->message);
+    g_clear_error (&error);
+    send_error (out, 500, "Internal server error");
+    return;
+  }
+
+  data = g_data_input_stream_new (G_INPUT_STREAM (input_stream));
+
+  node = shp_json_node_new_object (NULL);
+
+  while (TRUE) {
+    guint i;
+    gchar **options_list;
+    ShpJsonNode *obj = NULL;
+    ShpJsonNode *arr = NULL;
+
+    //plugin:device-type:type1,option1:type2,option2
+
+    line = g_data_input_stream_read_line (data, NULL, NULL, NULL);
+    if (!line)
+      break;
+
+    g_debug ("rest: config file line: %s", line);
+
+    options_list = g_strsplit (line, ":", 0);
+    for (i = 0; options_list[i] != NULL; i++) {
+      ShpJsonNode *child;
+      gchar **params;
+
+      switch (i) {
+        case 0:
+          obj = shp_json_node_new_object (options_list[i]);
+          break;
+        case 1:
+          child = shp_json_node_new_string ("device-type", options_list[i]);
+          shp_json_node_append_element (obj, child);
+          break;
+        case 2:
+          arr = shp_json_node_new_array ("display-options");
+          /* fall trhough */
+        default:
+          params = g_strsplit (options_list[i], " ", 0);
+          if (params && params[0] && params[1] && !params[2]) {
+            child = shp_json_node_new_string (params[0], params[1]);
+            shp_json_node_append_element (arr, child);
+          }
+          g_strfreev (params);
+          break;
+      }
+    }
+    g_strfreev (options_list);
+
+    if (obj != NULL) {
+      if (arr != NULL)
+        shp_json_node_append_element (obj, arr);
+      shp_json_node_append_element (node, obj);
+    }
+
+    g_free (line);
+  }
+
+  g_object_unref (input_stream);
+  g_object_unref (file);
+
+  send_ok (out, node);
+  shp_json_node_free (node);
+}
+
+static void
 handler (ShpHttpRequest request, const gchar * path, const gchar * query,
     GSocketConnection * connection, gpointer user_data)
 {
   ShpRest *self = SHP_REST (user_data);
   GOutputStream *out;
-  GString *output;
-  gchar *output_str;
-
-  if (request != SHP_HTTP_GET && request != SHP_HTTP_POST) {
-    g_warning ("rest: unsupported request type");
-    return;
-  }
 
   g_debug ("rest: incomming connection");
 
   out = g_io_stream_get_output_stream (G_IO_STREAM (connection));
 
-  g_debug ("rest: path: %s, query: %s", path, query);
+  if (request != SHP_HTTP_GET && request != SHP_HTTP_POST) {
+    g_debug ("rest: unsupported request type");
+    send_error (out, 400, "Invalid request");
+    return;
+  }
 
-  output = g_string_new (NULL);
+  g_debug ("rest: path: %s, query: %s", path, query);
 
   if (request == SHP_HTTP_GET && query == NULL) {
     /* no query, just collect data for all sensors belonging to requested
      * path */
     ShpJsonNode *node;
     ResponseData *response_data;
-
-    g_string_append (output, "HTTP/1.0 200 OK\r\n");
-    g_string_append (output, "Content-Type: application/json\r\n\r\n");
 
     node = shp_json_node_new_object (NULL);
 
@@ -283,7 +414,7 @@ handler (ShpHttpRequest request, const gchar * path, const gchar * query,
 
     g_free (response_data);
 
-    g_string_append (output, shp_json_node_to_string (node));
+    send_ok (out, node);
     shp_json_node_free (node);
   } else if (request == SHP_HTTP_GET) {
     /* create request based on input command */
@@ -307,9 +438,6 @@ handler (ShpHttpRequest request, const gchar * path, const gchar * query,
       ShpJsonNode *object;
       GPtrArray *arr;
 
-      g_string_append (output, "HTTP/1.0 200 OK\r\n");
-      g_string_append (output, "Content-Type: application/json\r\n\r\n");
-
       node = shp_json_node_new_object (NULL);
       array_node = shp_json_node_new_array (path);
       shp_json_node_append_element (node, array_node);
@@ -331,7 +459,7 @@ handler (ShpHttpRequest request, const gchar * path, const gchar * query,
         }
       }
 
-      g_string_append (output, shp_json_node_to_string (node));
+      send_ok (out, node);
       shp_json_node_free (node);
     } else {
       send_error (out, 400, "Invalid request");
@@ -348,20 +476,15 @@ handler (ShpHttpRequest request, const gchar * path, const gchar * query,
       goto out;
     }
 
-    g_string_append (output, "HTTP/1.0 200 OK\r\n");
-    g_string_append (output, "Content-Type: text/plain\r\n\r\n");
-
     event_str = shp_message_to_string (event);
     g_debug ("rest: about to post: %s", event_str);
     g_free (event_str);
 
+    send_ok (out, NULL);
+
     shp_component_post_message (SHP_COMPONENT (self), event);
   }
 
-  output_str = g_string_free (output, FALSE);
-  g_output_stream_write_all (out, output_str, strlen (output_str),
-      NULL, NULL, NULL);
-  g_free (output_str);
 out:
   return;
 }
@@ -378,7 +501,10 @@ shp_rest_plugin_start (ShpComponent * component)
   if (!klass->start (component))
     return FALSE;
 
-  shp_http_start (self->http);
+  if (self->http) {
+    shp_http_add_path (self->http, "/web", web_handler, self, NULL);
+    shp_http_start (self->http);
+  }
 
   /* chain up to parent now */
   return TRUE;
@@ -393,7 +519,8 @@ shp_rest_plugin_stop (ShpComponent * component)
   self = SHP_REST (component);
   klass = SHP_COMPONENT_CLASS (shp_rest_parent_class);
 
-  shp_http_stop (self->http);
+  if (self->http)
+    shp_http_stop (self->http);
 
   /* chain up to parent now */
   return klass->stop (component);

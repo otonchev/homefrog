@@ -13,6 +13,8 @@ Available plugins:
     format:
 
       "reading" - type double, temperature reading
+      "units" - "C"
+      "units_humanized" - "Celsius"
 
     To be able to use this plugin digitemp needs to be installed and running.
     The digitemp.conf must also be present.
@@ -45,6 +47,8 @@ Available plugins:
     format:
 
       "reading" - type double, temperature reading
+      "units" - "C"
+      "units_humanized" - "Celsius"
 
     The directory structure is as following:
 

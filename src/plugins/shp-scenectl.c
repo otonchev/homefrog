@@ -123,16 +123,34 @@ shp_scenectl_set_property (GObject * object, guint propid,
 static void
 status_update (ShpPlugin * plugin)
 {
+  ShpComponent *component = SHP_COMPONENT (plugin);
+  ShpScenectl *scenectl = SHP_SCENECTL (plugin);
   ShpMessage *msg;
+  const GSList *events;
 
   g_debug ("scenectl: reqest for signalling status");
 
-  if (SHP_SCENECTL (plugin)->scene == NULL) {
+  if (scenectl->scene == NULL) {
     g_warning ("scenectl: incomplete configuration, missing 'scene'");
     return;
   }
 
   msg = shp_message_new (shp_component_get_path (SHP_COMPONENT (plugin)));
+  shp_message_add_string (msg, "name", shp_component_get_name (component));
+
+  events = shp_scene_get_events (scenectl->scene);
+  while (events) {
+    ShpMessage *event = SHP_MESSAGE (events->data);
+    const gchar *destination;
+
+    destination = shp_message_get_destination_path (event);
+    if (!destination) {
+      g_warning ("event with no destination, ignoring");
+    } else {
+      shp_message_add_string (msg, destination, shp_message_get_name (event));
+    }
+    events = g_slist_next (events);
+  }
 
   if (!shp_component_post_message (SHP_COMPONENT (plugin), msg))
     g_warning ("could not post message on bus");
@@ -153,6 +171,7 @@ message_received (ShpSlavePlugin * plugin, ShpBus * bus,
 
   g_debug ("scenectl: activating scene");
   shp_scene_activate (self->scene);
+  status_update (SHP_PLUGIN (plugin));
 }
 
 static void
