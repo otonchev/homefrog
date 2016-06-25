@@ -295,7 +295,7 @@ shp_http_start (ShpHttp * self)
 
   priv = self->priv;
 
-  service = g_threaded_socket_service_new (10);
+  service = g_threaded_socket_service_new (50);
   if (!g_socket_listener_add_inet_port (G_SOCKET_LISTENER (service),
       priv->port, NULL, &error)) {
     g_warning ("rest: unable to start service: %s\n", error->message);

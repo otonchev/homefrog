@@ -70,7 +70,7 @@ main (int argc, char *argv[])
 
   g_key_file_free (file);
 
-#if 0
+#if 1
   {
     /* Turn Heater in the Living room on floor 1 on if the temperature drops
      * below 17C and time is after 19:45.
@@ -95,9 +95,10 @@ main (int argc, char *argv[])
     ShpPlugin *telldus;
     ShpPlugin *telldus2;
     ShpPlugin *scenectl;
+    ShpPlugin *grovedust;
 
     /* load REST plugin */
-    http = shp_http_new (6666);
+    http = shp_http_new (1234);
     rest = shp_plugin_factory_create ("rest", NULL);
     /* this file is optional and describes how different plugins should be
      * visualised */
@@ -149,6 +150,11 @@ main (int argc, char *argv[])
         "/home/floor1/LivingRoom/Heater2");
     g_object_set (G_OBJECT (telldus2), "device-id", 1, NULL);
 
+    /* load grovedust plugin for measuring dust concentration */
+    grovedust = shp_plugin_factory_create ("grovedust",
+        "/home/floor1/DustConcentration");
+    g_object_set (G_OBJECT (grovedust), "pin", 17, NULL);
+
     /* create the event bus */
     bus = shp_bus_new ();
 
@@ -180,6 +186,7 @@ main (int argc, char *argv[])
     shp_group_add (group, SHP_COMPONENT (telldus));
     shp_group_add (group, SHP_COMPONENT (telldus2));
     shp_group_add (group, SHP_COMPONENT (scenectl));
+    shp_group_add (group, SHP_COMPONENT (grovedust));
 
     /* create scene with one event */
     scene = shp_scene_new (g_object_ref (bus));
