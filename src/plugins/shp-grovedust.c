@@ -192,16 +192,17 @@ static gboolean
 shp_grovedust_start (ShpComponent * component)
 {
   ShpGrovedust *self;
+/*
   ShpComponentClass *klass;
-
+*/
   g_return_val_if_fail (IS_SHP_COMPONENT (component), FALSE);
 
   self = SHP_GROVEDUST (component);
-
+/*
   klass = SHP_COMPONENT_CLASS (shp_grovedust_parent_class);
   if (!klass->start (component))
     return FALSE;
-
+*/
   if (lngpio_is_exported (self->pin))
     lngpio_unexport (self->pin);
 
@@ -242,13 +243,13 @@ static gboolean
 shp_grovedust_stop (ShpComponent * component)
 {
   ShpGrovedust *self;
-  ShpComponentClass *klass;
+  //ShpComponentClass *klass;
 
   g_return_if_fail (IS_SHP_GROVEDUST (component));
 
   self = SHP_GROVEDUST (component);
 
-  klass = SHP_COMPONENT_CLASS (shp_grovedust_parent_class);
+  //klass = SHP_COMPONENT_CLASS (shp_grovedust_parent_class);
 
   if (self->monitor) {
     lngpio_pin_monitor_stop (self->monitor);
@@ -256,7 +257,8 @@ shp_grovedust_stop (ShpComponent * component)
     lngpio_unexport (self->pin);
   }
 
-  return klass->stop (component);
+  /* chain up to parent */
+  return TRUE; //klass->stop (component);
 }
 
 static void
