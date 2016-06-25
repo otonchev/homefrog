@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+<meta content="utf-8" http-equiv="encoding">
+</head>
+<body>
+
+<script>
+
+var urlHome = 'http://ogy.noip.me:5678/home';
+var urlWeb = 'http://ogy.noip.me:5678/web';
+
+var getJSON = function(url, successHandler, errorHandler) {
+	var xhr = typeof XMLHttpRequest != 'undefined'
+		? new XMLHttpRequest()
+		: new ActiveXObject('Microsoft.XMLHTTP');
+	xhr.open('get', url, true);
+	xhr.onreadystatechange = function() {
+		var status;
+		var data;
+		if (xhr.readyState == 4) { // `DONE`
+			status = xhr.status;
+			if (status == 200) {
+				data = JSON.parse(xhr.responseText);
+				successHandler && successHandler(data);
+			} else {
+				errorHandler && errorHandler(status);
+			}
+		}
+	};
+	xhr.send();
+};
+
+var displaySensors = function(jsonHomeObj, jsonWebObj) {
+        var pathArray = new Array();
+
+        //create Associative array where keys=paths and values are array of objects
+        //describing sensors belonging to path
+
+        for (var sensor in jsonHomeObj) {
+                if (jsonHomeObj.hasOwnProperty(sensor)) {
+                        var n = sensor.lastIndexOf("/");
+                        var pathToSensor = sensor.substring(0, n + 1)
+
+                        var sensors;
+                        if (pathToSensor in pathArray) {
+                                sensors = pathArray[pathToSensor];
+                        } else {
+                                sensors = new Array();
+                                pathArray[pathToSensor] = sensors;
+                        }
+
+                        sensors[sensors.length] = {name:sensor.substring(n + 1, sensor.length), description:jsonHomeObj[sensor]}
+                }
+        }
+
+        //iterate array
+
+        for (var path in pathArray) {
+
+                var tablearea = document.getElementById('tablearea'),
+                        table = document.createElement('table');
+
+                var tr = document.createElement('tr');
+                var td = document.createElement('td');
+                td.style.width = '300px';
+                tr.appendChild( td );
+                td = document.createElement('td');
+                td.style.width = '200px';
+                tr.appendChild( td );
+                tr.appendChild( document.createElement('td') );
+                tr.cells[0].appendChild( document.createTextNode(path) );
+                tr.cells[1].appendChild( document.createTextNode('') );
+                tr.cells[2].appendChild( document.createTextNode('') );
+                table.appendChild(tr);
+
+                sensors = pathArray[path];
+                for (i = 0; i < sensors.length; i++) {
+                        var sensorName = sensors[i].name;
+                        var pluginName = sensors[i].description.name;
+
+                        if (jsonWebObj[pluginName] != undefined) {
+                                var deviceType = jsonWebObj[pluginName]["device-type"];
+                                var displayOptions = jsonWebObj[pluginName]["display-options"];
+                                var displayString = "";
+
+                                if (deviceType == "scene") {
+                                        displayString = "SCENE";
+                                } else {
+                                        for (j = 0; j < displayOptions.length; j++) {
+                                                var displayOption = displayOptions[j];
+                                                var option = displayOption.option;
+                                                var type = displayOption.type;
+                                                var value1 = sensors[i].description[option];
+                                                displayString = displayString + value1 + " ";
+                                        }
+                                }
+
+                                var tr = document.createElement('tr');
+                                tr.appendChild( document.createElement('td') );
+                                tr.appendChild( document.createElement('td') );
+                                tr.appendChild( document.createElement('td') );
+                                tr.cells[0].appendChild( document.createTextNode('') )
+                                tr.cells[1].appendChild( document.createTextNode(sensorName) );
+                                tr.cells[2].appendChild( document.createTextNode(displayString) );
+                                table.appendChild(tr);
+                        }
+                }
+
+                tablearea.appendChild(table);
+        }
+
+};
+
+getJSON(urlHome, function(jsonHomeObj) {
+        getJSON(urlWeb, function(jsonWebObj) {
+                displaySensors(jsonHomeObj, jsonWebObj);
+        }, function(status) {
+                alert('Something went wrong.');
+        });
+}, function(status) {
+        alert('Something went wrong.');
+});
+
+</script>
+
+<div id="tablearea"></div>
+
+</body>
+</html>
