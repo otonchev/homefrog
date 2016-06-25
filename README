@@ -226,14 +226,23 @@ GET http://192.168.0.240:6666/web
         "ds1820digitemp":{
             "device-type":"sensor-simple",
             "display-options":[
-                "temperature":"double",
-                "units":"string"
+                {
+                    "option":"temperature",
+                    "type":"double"
+                },
+                {
+                    "option":"units",
+                    "type":"string"
+                }
             ]
         },
         "telldus":{
             "device-type":"switch-simple",
             "display-options":[
-                "status":"string"
+                {
+                    "option":"status",
+                    "type":"string"
+                }
             ]
         },
         "scenectl":{
@@ -241,9 +250,17 @@ GET http://192.168.0.240:6666/web
             "display-options":[
 
             ]
+        },
+        "grovedust":{
+            "device-type":"sensor-simple",
+            "display-options":[
+                {
+                    "option":"aqi",
+                    "type":"integer"
+                }
+            ]
         }
     }
-
 
 /home*
 ------

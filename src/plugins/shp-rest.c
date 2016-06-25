@@ -338,6 +338,7 @@ web_handler (ShpHttpRequest request, const gchar * path, const gchar * query,
     options_list = g_strsplit (line, ":", 0);
     for (i = 0; options_list[i] != NULL; i++) {
       ShpJsonNode *child;
+      ShpJsonNode *grand_child;
       gchar **params;
 
       switch (i) {
@@ -354,7 +355,11 @@ web_handler (ShpHttpRequest request, const gchar * path, const gchar * query,
         default:
           params = g_strsplit (options_list[i], " ", 0);
           if (params && params[0] && params[1] && !params[2]) {
-            child = shp_json_node_new_string (params[0], params[1]);
+            child = shp_json_node_new_object (NULL);
+            grand_child = shp_json_node_new_string ("option", params[0]);
+            shp_json_node_append_element (child, grand_child);
+            grand_child = shp_json_node_new_string ("type", params[1]);
+            shp_json_node_append_element (child, grand_child);
             shp_json_node_append_element (arr, child);
           }
           g_strfreev (params);
