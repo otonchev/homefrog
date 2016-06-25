@@ -14,6 +14,14 @@ types like integer, string, double, etc are not enough.
 
 Plugins are documented in docs/plugins.txt
 
+
+DEMO (REST API, see below for description):
+-------------------------------------------
+
+http://ogy.noip.me:5678/home
+http://ogy.noip.me:5678/web
+
+
 Features under development:
 ---------------------------
 
@@ -159,6 +167,7 @@ room and the time:
     /* the group owns and manages all objects added to it, they will be
      * automatically freed when the group itself is freed */
 
+
 Example 2:
 ----------
 
@@ -201,6 +210,7 @@ Accessing the REST API:
 The API is provided by the "rest" plugin and returns Json responses.
 It is automatically enabled when the plugin is loaded.
 
+
 /web
 ----
 
@@ -233,6 +243,7 @@ GET http://192.168.0.240:6666/web
             ]
         }
     }
+
 
 /home*
 ------
