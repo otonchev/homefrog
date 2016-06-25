@@ -214,11 +214,12 @@ message_received (ShpSlavePlugin * plugin, ShpBus * bus,
     return;
   }
 
-  command = shp_message_get_string (message, "command");
-  if (!command)
+  if (!shp_message_has_value (message, "command", G_TYPE_STRING))
     set_on = !get_status (SHP_TELLDUS (plugin));
-  else
+  else {
+    command = shp_message_get_string (message, "command");
     set_on = !g_strcmp0 (command, "on");
+  }
 
   g_debug ("telldus: command: %s", command);
 
