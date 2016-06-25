@@ -8,14 +8,16 @@
 
 <script>
 
-var urlHome = 'http://ogy.noip.me:5678/home';
-var urlWeb = 'http://ogy.noip.me:5678/web';
+var urlRoot = 'http://ogy.noip.me:5678';
+var urlHome = urlRoot + '/home';
+var urlWeb = urlRoot + '/web';
+var historySuffix = '?history';
 
-var getJSON = function(url, successHandler, errorHandler) {
+var getJSON = function(url, requestType, successHandler, errorHandler) {
 	var xhr = typeof XMLHttpRequest != 'undefined'
 		? new XMLHttpRequest()
 		: new ActiveXObject('Microsoft.XMLHTTP');
-	xhr.open('get', url, true);
+	xhr.open(requestType, url, true);
 	xhr.onreadystatechange = function() {
 		var status;
 		var data;
@@ -31,6 +33,52 @@ var getJSON = function(url, successHandler, errorHandler) {
 	};
 	xhr.send();
 };
+
+var generateHistory = function(historyUrl) {
+        getJSON(historyUrl, 'get', function(jsonHistoryObj) {
+                getJSON(urlWeb, 'get', function(jsonWebObj) {
+
+                        var outputString = "";
+
+                        for (var path in jsonHistoryObj) {
+                                for (i = 0; i < jsonHistoryObj[path].length; i++) {
+                                        var singleRecord = jsonHistoryObj[path][i];
+                                        var pluginName = singleRecord.name;
+                                        var timestamp = singleRecord["rest.timestamp"];
+
+                                        var deviceType = jsonWebObj[pluginName]["device-type"];
+                                        var displayOptions = jsonWebObj[pluginName]["display-options"];
+
+                                        if (deviceType == "scene") {
+                                                outputString = outputString + "activated";
+                                        } else {
+                                                for (j = 0; j < displayOptions.length; j++) {
+                                                        var displayOption = displayOptions[j].option;
+                                                        outputString = outputString + " " +singleRecord[displayOption];
+                                                }
+                                        }
+
+                                        outputString = outputString + ", " + timestamp + "\n";
+                                }
+                        }
+
+                        alert(outputString);
+                }, function(status) {
+                        alert('Something went wrong.');
+                });
+        }, function(status) {
+                alert('Something went wrong.');
+        });
+}
+
+var simpleSwitch = function(path, buttonName) {
+        getJSON(urlRoot + path, 'post', function(jsonWebObj) {
+                currentStatus = document.getElementById(buttonName).value;
+                document.getElementById(buttonName).value = ((currentStatus == "on") ? "off" : "on");
+        }, function(status) {
+                alert('Something went wrong.');
+        });
+}
 
 var displaySensors = function(jsonHomeObj, jsonWebObj) {
         var pathArray = new Array();
@@ -51,7 +99,7 @@ var displaySensors = function(jsonHomeObj, jsonWebObj) {
                                 pathArray[pathToSensor] = sensors;
                         }
 
-                        sensors[sensors.length] = {name:sensor.substring(n + 1, sensor.length), description:jsonHomeObj[sensor]}
+                        sensors[sensors.length] = {full_path:sensor, name:sensor.substring(n + 1, sensor.length), description:jsonHomeObj[sensor]}
                 }
         }
 
@@ -69,10 +117,14 @@ var displaySensors = function(jsonHomeObj, jsonWebObj) {
                 td = document.createElement('td');
                 td.style.width = '200px';
                 tr.appendChild( td );
+                td = document.createElement('td');
+                td.style.width = '200px';
+                tr.appendChild( td );
                 tr.appendChild( document.createElement('td') );
                 tr.cells[0].appendChild( document.createTextNode(path) );
                 tr.cells[1].appendChild( document.createTextNode('') );
                 tr.cells[2].appendChild( document.createTextNode('') );
+                tr.cells[3].appendChild( document.createTextNode('') );
                 table.appendChild(tr);
 
                 sensors = pathArray[path];
@@ -81,13 +133,32 @@ var displaySensors = function(jsonHomeObj, jsonWebObj) {
                         var pluginName = sensors[i].description.name;
 
                         if (jsonWebObj[pluginName] != undefined) {
+                                var tr = document.createElement('tr');
+                                tr.appendChild( document.createElement('td') );
+                                tr.appendChild( document.createElement('td') );
+                                tr.appendChild( document.createElement('td') );
+                                tr.appendChild( document.createElement('td') );
+                                tr.cells[0].appendChild( document.createTextNode('') )
+                                tr.cells[1].appendChild( document.createTextNode(sensorName) );
+
                                 var deviceType = jsonWebObj[pluginName]["device-type"];
                                 var displayOptions = jsonWebObj[pluginName]["display-options"];
                                 var displayString = "";
 
                                 if (deviceType == "scene") {
-                                        displayString = "SCENE";
+                                        tr.cells[2].appendChild( document.createTextNode("SCENE") );
+                                } else if (deviceType == "switch-simple") {
+                                        var displayOption = displayOptions[0].option;
+                                        var switchStatus = sensors[i].description[displayOption];
+                                        var sensorFullPath = sensors[i].full_path;
+                                        var buttonName = "buttonSimpleSwitch" + i;
+
+                                        var span = document.createElement('span');
+                                        span.innerHTML = '<input type="button" id="' + buttonName + '" value="' + switchStatus + '" onclick=simpleSwitch(\'' + sensorFullPath + '\',\'' + buttonName + '\')></input>';
+                                        tr.cells[2].appendChild( span );
                                 } else {
+                                        var displayString = "";
+
                                         for (j = 0; j < displayOptions.length; j++) {
                                                 var displayOption = displayOptions[j];
                                                 var option = displayOption.option;
@@ -95,15 +166,15 @@ var displaySensors = function(jsonHomeObj, jsonWebObj) {
                                                 var value1 = sensors[i].description[option];
                                                 displayString = displayString + value1 + " ";
                                         }
+
+                                        tr.cells[2].appendChild( document.createTextNode(displayString) );
                                 }
 
-                                var tr = document.createElement('tr');
-                                tr.appendChild( document.createElement('td') );
-                                tr.appendChild( document.createElement('td') );
-                                tr.appendChild( document.createElement('td') );
-                                tr.cells[0].appendChild( document.createTextNode('') )
-                                tr.cells[1].appendChild( document.createTextNode(sensorName) );
-                                tr.cells[2].appendChild( document.createTextNode(displayString) );
+                                var sensorFullPath = sensors[i].full_path;
+                                var historyUrl = urlRoot + sensorFullPath + historySuffix;
+                                var span = document.createElement('span');
+                                span.innerHTML = '<button id="buttonHistory" value="History" onclick=generateHistory("' + historyUrl + '")>History</button>';
+                                tr.cells[3].appendChild( span );
                                 table.appendChild(tr);
                         }
                 }
@@ -113,8 +184,8 @@ var displaySensors = function(jsonHomeObj, jsonWebObj) {
 
 };
 
-getJSON(urlHome, function(jsonHomeObj) {
-        getJSON(urlWeb, function(jsonWebObj) {
+getJSON(urlHome, 'get', function(jsonHomeObj) {
+        getJSON(urlWeb, 'get', function(jsonWebObj) {
                 displaySensors(jsonHomeObj, jsonWebObj);
         }, function(status) {
                 alert('Something went wrong.');
