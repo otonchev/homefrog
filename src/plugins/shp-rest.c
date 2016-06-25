@@ -477,6 +477,7 @@ handler (ShpHttpRequest request, const gchar * path, const gchar * query,
   } else if (request == SHP_HTTP_POST) {
     gchar *event_str;
     ShpMessage *event;
+    ShpJsonNode *object;
 
     event = shp_message_new_command (path);
     if (!event) {
@@ -488,7 +489,9 @@ handler (ShpHttpRequest request, const gchar * path, const gchar * query,
     g_debug ("rest: about to post: %s", event_str);
     g_free (event_str);
 
-    send_ok (out, NULL);
+    object = shp_json_node_new_object (NULL);
+    send_ok (out, object);
+    shp_json_node_free (object);
 
     shp_component_post_message (SHP_COMPONENT (self), event);
   }
@@ -572,7 +575,7 @@ message_received_any (ShpSlavePlugin * plugin, ShpBus * bus,
     GPtrArray *arr;
 
     if (!g_hash_table_contains (self->history, source_path)) {
-      arr = g_ptr_array_new ();
+      arr = g_ptr_array_new_with_free_func (g_object_unref);
       g_hash_table_insert (self->history, g_strdup (source_path), arr);
     } else
       arr = g_hash_table_lookup (self->history, source_path);
