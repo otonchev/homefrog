@@ -262,8 +262,11 @@ send_ok (GOutputStream * out, ShpJsonNode * node)
   gchar *output_str;
 
   output = g_string_new (NULL);
-  g_string_append (output, "HTTP/1.0 200 OK\r\n");
-  g_string_append (output, "Content-Type: text/plain\r\n\r\n");
+  g_string_append (output, "HTTP/1.1 200 OK\r\n");
+  g_string_append (output, "Content-Type: application/json; charset=utf-8\r\n");
+  g_string_append (output, "Server: HomefrogREST/0.1 HomeAutomation\r\n");
+  g_string_append (output,
+      "Access-Control-Allow-Origin: *\r\n\r\n");
 
   if (node) {
     gchar *tmp = shp_json_node_to_string (node);
