@@ -272,8 +272,11 @@ send_status_update (ShpGrovedust * self, float pcs, float ugm3, guint aqi)
 
   msg = shp_message_new (shp_component_get_path (component));
   shp_message_add_integer (msg, "aqi", aqi);
+  shp_message_add_string (msg, "aqi_scale", "AQI");
   shp_message_add_double (msg, "pcs", pcs);
+  shp_message_add_string (msg, "pcs_scale", "pcs/mg3");
   shp_message_add_double (msg, "ugm3", ugm3);
+  shp_message_add_string (msg, "ugm3_scale", "ugm3");
   shp_message_add_integer (msg, "pin", self->pin);
   shp_message_add_string (msg, "name", shp_component_get_name (component));
 
