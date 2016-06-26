@@ -1,5 +1,7 @@
-demo.html
----------
+index.html
+----------
 
 This is a minimalistic web page using the REST API and dynamically generating
 content. JavaScript must be enabled in order for the web page to work.
+
+css style sheets are from the Skeleton project: http://getskeleton.com/

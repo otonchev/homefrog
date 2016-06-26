@@ -1,37 +1,27 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-<meta content="utf-8" http-equiv="encoding">
-</head>
-<body>
-
-<script>
-
 var urlRoot = 'http://ogy.noip.me:5678';
 var urlHome = urlRoot + '/home';
 var urlWeb = urlRoot + '/web';
 var historySuffix = '?history';
 
 var getJSON = function(url, requestType, successHandler, errorHandler) {
-	var xhr = typeof XMLHttpRequest != 'undefined'
-		? new XMLHttpRequest()
-		: new ActiveXObject('Microsoft.XMLHTTP');
-	xhr.open(requestType, url, true);
-	xhr.onreadystatechange = function() {
-		var status;
-		var data;
-		if (xhr.readyState == 4) { // `DONE`
-			status = xhr.status;
-			if (status == 200) {
-				data = JSON.parse(xhr.responseText);
-				successHandler && successHandler(data);
-			} else {
-				errorHandler && errorHandler(status);
-			}
-		}
-	};
-	xhr.send();
+        var xhr = typeof XMLHttpRequest != 'undefined'
+                ? new XMLHttpRequest()
+                : new ActiveXObject('Microsoft.XMLHTTP');
+        xhr.open(requestType, url, true);
+        xhr.onreadystatechange = function() {
+                var status;
+                var data;
+                if (xhr.readyState == 4) { // `DONE`
+                        status = xhr.status;
+                        if (status == 200) {
+                                data = JSON.parse(xhr.responseText);
+                                successHandler && successHandler(data);
+                        } else {
+                                errorHandler && errorHandler(status);
+                        }
+                }
+        };
+        xhr.send();
 };
 
 var generateHistory = function(historyUrl) {
@@ -105,27 +95,30 @@ var displaySensors = function(jsonHomeObj, jsonWebObj) {
 
         //iterate array
 
+        var tablearea = document.getElementById('tablearea'),
+                table = document.createElement('table');
+        table.className ="u-full-width";
+
         for (var path in pathArray) {
 
-                var tablearea = document.getElementById('tablearea'),
-                        table = document.createElement('table');
-
+                var thead = document.createElement('thead');
                 var tr = document.createElement('tr');
-                var td = document.createElement('td');
-                td.style.width = '300px';
+                var td = document.createElement('th');
+                //td.style.width = '300px';
                 tr.appendChild( td );
-                td = document.createElement('td');
-                td.style.width = '200px';
+                td = document.createElement('th');
+                //td.style.width = '200px';
                 tr.appendChild( td );
-                td = document.createElement('td');
-                td.style.width = '200px';
+                td = document.createElement('th');
+                //td.style.width = '200px';
                 tr.appendChild( td );
-                tr.appendChild( document.createElement('td') );
+                tr.appendChild( document.createElement('th') );
                 tr.cells[0].appendChild( document.createTextNode(path) );
                 tr.cells[1].appendChild( document.createTextNode('') );
                 tr.cells[2].appendChild( document.createTextNode('') );
                 tr.cells[3].appendChild( document.createTextNode('') );
-                table.appendChild(tr);
+                thead.appendChild(tr);
+                table.appendChild(thead);
 
                 sensors = pathArray[path];
                 for (i = 0; i < sensors.length; i++) {
@@ -133,13 +126,14 @@ var displaySensors = function(jsonHomeObj, jsonWebObj) {
                         var pluginName = sensors[i].description.name;
 
                         if (jsonWebObj[pluginName] != undefined) {
+                                var tbody = document.createElement('tbody');
                                 var tr = document.createElement('tr');
                                 tr.appendChild( document.createElement('td') );
                                 tr.appendChild( document.createElement('td') );
                                 tr.appendChild( document.createElement('td') );
                                 tr.appendChild( document.createElement('td') );
                                 tr.cells[0].appendChild( document.createTextNode('') )
-                                tr.cells[1].appendChild( document.createTextNode(sensorName) );
+                                tr.cells[1].appendChild( document.createTextNode(sensorName) ); 
 
                                 var deviceType = jsonWebObj[pluginName]["device-type"];
                                 var displayOptions = jsonWebObj[pluginName]["display-options"];
@@ -175,13 +169,14 @@ var displaySensors = function(jsonHomeObj, jsonWebObj) {
                                 var span = document.createElement('span');
                                 span.innerHTML = '<button id="buttonHistory" value="History" onclick=generateHistory("' + historyUrl + '")>History</button>';
                                 tr.cells[3].appendChild( span );
-                                table.appendChild(tr);
+                                tbody.appendChild(tr);
+                                table.appendChild(tbody);
                         }
                 }
 
-                tablearea.appendChild(table);
         }
 
+        tablearea.appendChild(table);
 };
 
 getJSON(urlHome, 'get', function(jsonHomeObj) {
@@ -194,9 +189,3 @@ getJSON(urlHome, 'get', function(jsonHomeObj) {
         alert('Something went wrong.');
 });
 
-</script>
-
-<div id="tablearea"></div>
-
-</body>
-</html>
