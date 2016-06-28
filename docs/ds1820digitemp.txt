@@ -1,0 +1,44 @@
+Setting up digitemp (for the "ds1820digitemp" module):
+------------------------------------------------------
+
+Install digitemp and run:
+
+	digitemp_DS9097 -w -s /dev/ttyUSB0 
+	DigiTemp v3.6.0 Copyright 1996-2007 by Brian C. Lane
+	GNU General Public License v2.0 - http://www.digitemp.com
+	Turning off all DS2409 Couplers
+	.....
+	Devices on the Main LAN
+	1038860A020800C2 : DS1820/DS18S20/DS1920 Temperature Sensor
+	10EE9F7402080086 : DS1820/DS18S20/DS1920 Temperature Sensor
+	1065800A0208003A : DS1820/DS18S20/DS1920 Temperature Sensor
+	10D3DB74020800D7 : DS1820/DS18S20/DS1920 Temperature Sensor
+	1007770A02080060 : DS1820/DS18S20/DS1920 Temperature Sensor
+
+And create digitemp.conf
+
+	pi@raspberrypi ~/digitemp $ vi digitemp.conf
+	TTY /dev/ttyUSB0
+	READ_TIME 1000
+	LOG_TYPE 1
+	LOG_FORMAT "Room %s: %.1C C"
+	CNT_FORMAT "%b %d %H:%M:%S Sensor %s #%n %C"
+	HUM_FORMAT "%b %d %H:%M:%S Sensor %s C: %.2C F: %.2F H: %h%%"
+	SENSORS 5
+	ROM 0 0x10 0x38 0x86 0x0A 0x02 0x08 0x00 0xC2
+	ROM 1 0x10 0xEE 0x9F 0x74 0x02 0x08 0x00 0x86
+	ROM 2 0x10 0x65 0x80 0x0A 0x02 0x08 0x00 0x3A
+	ROM 3 0x10 0xD3 0xDB 0x74 0x02 0x08 0x00 0xD7
+	ROM 4 0x10 0x07 0x77 0x0A 0x02 0x08 0x00 0x60
+	
+	pi@raspberrypi ~/digitemp $ digitemp_DS9097 -c \
+		/home/pi/digitemp/digitemp.conf -a -q
+	0 14.8
+	1 13.5
+	2 17.3
+	3 17.4
+	4 17.4
+
+Note that the configure file shown above must be modified with device
+ids matching your devices and placed in the "PluginConfigDir" directory.
+This is important since the "ds1820digitemp" module will need it.

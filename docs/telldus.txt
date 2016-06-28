@@ -1,0 +1,62 @@
+Installing the Telldus stick on Raspberry Pi(for the "telldus" module):
+-----------------------------------------------------------------------
+
+	sudo vi /etc/apt/sources.list
+
+and add:
+
+	deb http://download.telldus.com/debian/ stable main
+	
+	sudo apt-key adv --fetch-keys \
+		http://download.telldus.se/debian/telldus-public.key
+	sudo apt-get update
+	sudo apt-get install -y telldus-core libftdi1
+	sudo apt-get install -y libtelldus-core-dev
+
+then run:
+
+	sudo /etc/init.d/telldusd status
+
+to verify that it is up and running.
+
+Then add some devices and try to turn them on and off:
+
+	vi /etc/tellstick.conf
+	
+	user = "nobody"
+	group = "plugdev"
+	deviceNode = "/dev/tellstick"
+	ignoreControllerConfirmation = "false"
+	device {
+		id = 1
+		name = "Livingroom1"
+		controller = 1
+		protocol = "risingsun"
+		model = "codeswitch"
+		parameters {
+			house = "2"
+			unit = "1"
+		}
+	}
+	device {
+		id = 2
+		name = "Livingroom2"
+		controller = 1
+		protocol = "risingsun"
+		model = "codeswitch"
+		parameters {
+			house = "2"
+			unit = "2"
+		}
+	}
+	controller {
+		id = 1
+		type = 1
+		serial = "A4004GCS"
+	}
+	
+	Restart telldusd:
+	sudo /etc/init.d/telldusd restart
+	
+	pi@raspberrypi ~ $ tdtool --on 2
+	pi@raspberrypi ~ $ tdtool --off 2

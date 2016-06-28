@@ -1,0 +1,17 @@
+GPIO directly (for the "raspberrygpio" module):
+-----------------------------------------------
+
+	sudo modprobe w1-gpio pullup=1
+	sudo modprobe w1-therm
+
+and:
+
+	ls -l /sys/bus/w1/devices
+
+to see all the temperature sensors.
+
+And finally:
+
+	cat /sys/bus/w1/devices/<sensor_id>/w1_slave
+
+to read temperature.
