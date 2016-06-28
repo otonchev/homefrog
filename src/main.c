@@ -70,10 +70,10 @@ main (int argc, char *argv[])
 
   g_key_file_free (file);
 
-#if 1
+#if 0
   {
-    /* Turn Heater in the Living room on floor 1 on if the temperature drops
-     * below 17C and time is after 19:45.
+    /* Turn-on Lamp1 and Lamp2 in the Living room on floor 1
+     * Monday-Friday at 19:00.
      */
     ShpBus *bus;
     ShpGroup *group;
@@ -81,7 +81,6 @@ main (int argc, char *argv[])
     ShpScene *scene;
     ShpRule *rule;
     ShpMessage *event;
-    ShpCondition *condition_temp;
     ShpCondition *condition_time;
     ShpComplextype *complex_type;
     ShpHttp *http;
@@ -97,14 +96,16 @@ main (int argc, char *argv[])
     ShpPlugin *scenectl;
     ShpPlugin *grovedust;
 
-    /* load REST plugin */
+    /* load REST plugin, API will be available on port 1234 */
     http = shp_http_new (1234);
     rest = shp_plugin_factory_create ("rest", NULL);
     /* this file is optional and describes how different plugins should be
      * visualised */
     g_object_set (G_OBJECT (rest), "config-file", "src/homefrog-rest.config",
         NULL);
+    /* provide HTTP instance to the REST plugin */
     g_object_set (G_OBJECT (rest), "http", http, NULL);
+    /* expose all /home devices */
     g_signal_emit_by_name (G_OBJECT (rest), "add-device-path", "/home*");
 
     /* load timer */
@@ -143,11 +144,11 @@ main (int argc, char *argv[])
 
     /* load telldus plugin for controlling heater */
     telldus = shp_plugin_factory_create ("telldus",
-        "/home/floor1/LivingRoom/Heater1");
+        "/home/floor1/LivingRoom/Lamp1");
     g_object_set (G_OBJECT (telldus), "device-id", 2, NULL);
 
     telldus2 = shp_plugin_factory_create ("telldus",
-        "/home/floor1/LivingRoom/Heater2");
+        "/home/floor1/LivingRoom/Lamp2");
     g_object_set (G_OBJECT (telldus2), "device-id", 1, NULL);
 
     /* load grovedust plugin for measuring dust concentration */
@@ -161,10 +162,10 @@ main (int argc, char *argv[])
     /* load scenectl plugin for controlling all devices in the Living room
      * simultaneously through the REST API */
     scene = shp_scene_new (g_object_ref (bus));
-    event = shp_message_new_command ("/home/floor1/LivingRoom/Heater1");
+    event = shp_message_new_command ("/home/floor1/LivingRoom/Lamp1");
     shp_message_add_string (event, "command", "off");
     shp_scene_add_event (scene, event);
-    event = shp_message_new_command ("/home/floor1/LivingRoom/Heater2");
+    event = shp_message_new_command ("/home/floor1/LivingRoom/Lamp2");
     shp_message_add_string (event, "command", "off");
     shp_scene_add_event (scene, event);
     scenectl = shp_plugin_factory_create ("scenectl",
@@ -188,27 +189,31 @@ main (int argc, char *argv[])
     shp_group_add (group, SHP_COMPONENT (scenectl));
     shp_group_add (group, SHP_COMPONENT (grovedust));
 
-    /* create scene with one event */
+    /* create scene with two events */
     scene = shp_scene_new (g_object_ref (bus));
-    event = shp_message_new_command ("/home/floor1/LivingRoom/Heater");
+    event = shp_message_new_command ("/home/floor1/LivingRoom/Lamp1");
+    shp_message_add_string (event, "command", "on");
+    shp_scene_add_event (scene, event);
+    scene = shp_scene_new (g_object_ref (bus));
+    event = shp_message_new_command ("/home/floor1/LivingRoom/Lamp2");
     shp_message_add_string (event, "command", "on");
     shp_scene_add_event (scene, event);
 
-    /* create the 2 conditions to be checked before activating the scene */
-    condition_temp = shp_condition_new ("/home/floor1/LivingRoom/Temperature");
-    shp_condition_add_double_option (condition_temp, "temperature", 15,
-        SHP_CONDITION_OPERATOR_GT);
-
+    /* create the condition to be checked before activating the scene */
     condition_time = shp_condition_new ("/clock/timer");
     complex_type = shp_complextype_factory_create ("timer.datetime");
+    shp_complextype_add_integer (complex_type, "week_day", 1); /* Monday */
+    shp_complextype_add_integer (complex_type, "week_day", 2);
+    shp_complextype_add_integer (complex_type, "week_day", 3);
+    shp_complextype_add_integer (complex_type, "week_day", 4);
+    shp_complextype_add_integer (complex_type, "week_day", 5);
     shp_complextype_add_integer (complex_type, "hour", 19);
-    shp_complextype_add_integer (complex_type, "minutes", 45);
+    shp_complextype_add_integer (complex_type, "minutes", 0);
     shp_condition_add_complextype_option (condition_time, "datetime",
-        complex_type, SHP_CONDITION_OPERATOR_GT);
+        complex_type, SHP_CONDITION_OPERATOR_EQ);
 
     /* add 2 conditions and scene to rule */
     rule = shp_rule_new ();
-    shp_rule_add_condition (rule, condition_temp);
     shp_rule_add_condition (rule, condition_time);
     shp_rule_set_scene (rule, scene);
 
