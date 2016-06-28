@@ -28,10 +28,24 @@ var generateHistory = function(historyUrl) {
         getJSON(historyUrl, 'get', function(jsonHistoryObj) {
                 getJSON(urlWeb, 'get', function(jsonWebObj) {
 
-                        var outputString = "";
+                        // Get the modal
+                        var modal = document.getElementById('myModal');
+                        var modalContent = document.getElementById('modalContent');
+
+                        // Remove old table if existing
+                        var oldTable = document.getElementById('tableHistory');
+                        if (oldTable != null)
+                                modalContent.removeChild(oldTable);
+
+                        // Create new table
+                        var table = document.createElement('table');
+                        table.className ="u-full-width";
+                        table.setAttribute("id", "tableHistory");
 
                         for (var path in jsonHistoryObj) {
                                 for (i = 0; i < jsonHistoryObj[path].length; i++) {
+                                        var outputString = "";
+
                                         var singleRecord = jsonHistoryObj[path][i];
                                         var pluginName = singleRecord.name;
                                         var timestamp = singleRecord["rest.timestamp"];
@@ -48,11 +62,34 @@ var generateHistory = function(historyUrl) {
                                                 }
                                         }
 
-                                        outputString = outputString + ", " + timestamp + "\n";
+                                        var tr = document.createElement('tr');
+                                        tr.appendChild( document.createElement('td') );
+                                        tr.appendChild( document.createElement('td') );
+                                        tr.cells[0].appendChild( document.createTextNode(outputString) )
+                                        tr.cells[1].appendChild( document.createTextNode(timestamp) );
+                                        table.appendChild(tr);
                                 }
                         }
 
-                        alert(outputString);
+                        // Add the new table
+                        modalContent.appendChild(table);
+
+                        // Get the <span> element that closes the modal
+                        var span = document.getElementsByClassName("close")[0];
+
+                        modal.style.display = "block";
+
+                        // When the user clicks on <span> (x), close the modal
+                        span.onclick = function() {
+                                modal.style.display = "none";
+                        }
+
+                        // When the user clicks anywhere outside of the modal, close it
+                        window.onclick = function(event) {
+                                if (event.target == modal) {
+                                        modal.style.display = "none";
+                                }
+                        }
                 }, function(status) {
                         alert('Something went wrong.');
                 });
