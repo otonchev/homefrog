@@ -12,7 +12,12 @@ All plugins are built and installed separately, they can be found under:
 Plugins are free to load plugin-specific complex data types as well when basic
 types like integer, string, double, etc are not enough.
 
-Plugins are documented in docs/plugins.txt
+
+Setting up devices / Configuring plugins:
+-----------------------------------------
+
+Plugins are documented in docs/plugins.txt and docs/*.txt
+
 
 DEMO (minimalistic web interface):
 ----------------------------------
@@ -25,6 +30,7 @@ http://ogy.noip.me:3456/demo.html
 Screenshot:
 
 https://raw.githubusercontent.com/otonchev/homefrog/master/images/homefrog.png
+
 
 DEMO (REST API, see below for description):
 -------------------------------------------
@@ -222,8 +228,8 @@ The API is provided by the "rest" plugin and returns Json responses.
 It is automatically enabled when the plugin is loaded.
 
 
-/web
-----
+http://<ip>/web
+---------------
 
 To get a description on how all the different plugins are to be visualised on
 the Web (all that is generated based on the content of the rest configure file:
@@ -273,8 +279,8 @@ GET http://192.168.0.240:6666/web
         }
     }
 
-/home*
-------
+http://<ip>/home*
+-----------------
 
 To display all components running on the system:
 
