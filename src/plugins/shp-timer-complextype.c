@@ -125,6 +125,21 @@ compare (ShpComplextypeCompare * data1, ShpComplextypeCompare * data2)
   struct1 = SHP_COMPLEXTYPE (data1);
   struct2 = SHP_COMPLEXTYPE (data2);
 
+  if (shp_complextype_has_value (struct1, "week_day", G_TYPE_INT) &&
+      shp_complextype_has_value (struct2, "week_day", G_TYPE_INT)) {
+    gint weekday1;
+    gint weekday2;
+
+    shp_complextype_get_integer (struct1, "week_day", &weekday1);
+    shp_complextype_get_integer (struct2, "week_day", &weekday2);
+
+    if (weekday1 != weekday2) {
+      comparison = SHP_COMPLEXTYPE_COMPARE_FAIL;
+      goto out;
+    }
+    comparison = SHP_COMPLEXTYPE_COMPARE_EQ;
+  }
+
   if (shp_complextype_has_value (struct1, "hour", G_TYPE_INT) &&
       shp_complextype_has_value (struct1, "minutes", G_TYPE_INT) &&
       shp_complextype_has_value (struct2, "hour", G_TYPE_INT) &&
@@ -134,21 +149,26 @@ compare (ShpComplextypeCompare * data1, ShpComplextypeCompare * data2)
     gint hour2;
     gint minutes2;
 
+    gint time1;
+    gint time2;
+
     shp_complextype_get_integer (struct1, "hour", &hour1);
     shp_complextype_get_integer (struct1, "minutes", &minutes1);
     shp_complextype_get_integer (struct2, "hour", &hour2);
     shp_complextype_get_integer (struct2, "minutes", &minutes2);
 
-    if (hour1 == hour2 && minutes1 == minutes2)
+    time1 = hour1 * 60 + minutes1;
+    time2 = hour2 * 60 + minutes2;
+
+    if (time1 == time2)
       comparison = SHP_COMPLEXTYPE_COMPARE_EQ;
-    else if (hour1 == hour2 && minutes1 < minutes2)
-      comparison = SHP_COMPLEXTYPE_COMPARE_GT;
-    else if (hour1 < hour2)
+    else if (time1 < time2)
       comparison = SHP_COMPLEXTYPE_COMPARE_GT;
     else
       comparison = SHP_COMPLEXTYPE_COMPARE_LT;
   }
 
+out:
   return comparison;
 }
 
