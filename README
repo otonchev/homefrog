@@ -257,7 +257,7 @@ Thursdays at 19:00.
     shp_condition_add_complextype_option (condition_time, "datetime",
         complex_type, SHP_CONDITION_OPERATOR_EQ);
 
-    /* add 2 conditions and scene to rule */
+    /* add the condition and the scene to a rule */
     rule = shp_rule_new ();
     shp_rule_add_condition (rule, condition_time);
     shp_rule_set_scene (rule, scene);
