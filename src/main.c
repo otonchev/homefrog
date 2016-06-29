@@ -73,7 +73,7 @@ main (int argc, char *argv[])
 #if 0
   {
     /* Turn-on Lamp1 and Lamp2 in the Living room on floor 1
-     * Monday-Friday at 19:00.
+     * Wednesday-Thursday at 19:00.
      */
     ShpBus *bus;
     ShpGroup *group;
@@ -201,12 +201,16 @@ main (int argc, char *argv[])
 
     /* create the condition to be checked before activating the scene */
     condition_time = shp_condition_new ("/clock/timer");
+    /* Wednesday 19:00 */
     complex_type = shp_complextype_factory_create ("timer.datetime");
-    shp_complextype_add_integer (complex_type, "week_day", 1); /* Monday */
-    shp_complextype_add_integer (complex_type, "week_day", 2);
-    shp_complextype_add_integer (complex_type, "week_day", 3);
-    shp_complextype_add_integer (complex_type, "week_day", 4);
-    shp_complextype_add_integer (complex_type, "week_day", 5);
+    shp_complextype_add_integer (complex_type, "week_day", 3); /* Wednesday */
+    shp_complextype_add_integer (complex_type, "hour", 19);
+    shp_complextype_add_integer (complex_type, "minutes", 0);
+    shp_condition_add_complextype_option (condition_time, "datetime",
+        complex_type, SHP_CONDITION_OPERATOR_EQ);
+    /* Thursday 19:00 */
+    complex_type = shp_complextype_factory_create ("timer.datetime");
+    shp_complextype_add_integer (complex_type, "week_day", 4); /* Thursday */
     shp_complextype_add_integer (complex_type, "hour", 19);
     shp_complextype_add_integer (complex_type, "minutes", 0);
     shp_condition_add_complextype_option (condition_time, "datetime",

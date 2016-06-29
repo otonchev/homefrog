@@ -201,9 +201,13 @@ add_option (ShpCondition * condition, const gchar * value_name, _Option *option)
 
   priv = condition->priv;
 
+  g_debug ("condition: adding option for: %s", value_name);
+
   option_list = g_hash_table_lookup (priv->options, value_name);
-  if (!option_list)
+  if (!option_list) {
+    g_debug ("condition: first option for: %s", value_name);
     new_name = TRUE;
+  }
 
   option_list = g_slist_append (option_list, option);
 
@@ -335,10 +339,13 @@ check_event (ShpCondition * condition, const ShpMessage * event)
     _Option *option;
     gboolean current = TRUE;
 
+    g_debug ("condition: checking options for: %s", (gchar *)key);
+
     option_list = (GSList *) value;
     while (option_list) {
 
       option = (_Option *) (option_list->data);
+      g_debug ("condition: checking option");
 
       if (option->value_type == G_TYPE_STRING) {
         const gchar *event_value_str;

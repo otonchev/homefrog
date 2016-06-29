@@ -111,7 +111,7 @@ compare (ShpComplextypeCompare * data1, ShpComplextypeCompare * data2)
 {
   ShpComplextype *struct1;
   ShpComplextype *struct2;
-  ShpComplextypeCompareResult comparison = SHP_COMPLEXTYPE_COMPARE_FAIL;
+  ShpComplextypeCompareResult comparison;
 
   g_return_val_if_fail (IS_SHP_COMPLEXTYPE_TIMER (data1),
       SHP_COMPLEXTYPE_COMPARE_FAIL);
@@ -135,10 +135,15 @@ compare (ShpComplextypeCompare * data1, ShpComplextypeCompare * data2)
 
     if (weekday1 != weekday2) {
       comparison = SHP_COMPLEXTYPE_COMPARE_FAIL;
+      g_debug ("timer-complextype: week days are different: %d, %d",
+          weekday1, weekday2);
       goto out;
     }
     comparison = SHP_COMPLEXTYPE_COMPARE_EQ;
-  }
+      g_debug ("timer-complextype: week days are same");
+  } else
+    comparison = SHP_COMPLEXTYPE_COMPARE_FAIL;
+    /* let implementation below decide */
 
   if (shp_complextype_has_value (struct1, "hour", G_TYPE_INT) &&
       shp_complextype_has_value (struct1, "minutes", G_TYPE_INT) &&
@@ -160,12 +165,16 @@ compare (ShpComplextypeCompare * data1, ShpComplextypeCompare * data2)
     time1 = hour1 * 60 + minutes1;
     time2 = hour2 * 60 + minutes2;
 
-    if (time1 == time2)
+    if (time1 == time2) {
       comparison = SHP_COMPLEXTYPE_COMPARE_EQ;
-    else if (time1 < time2)
+      g_debug ("timer-complextype: times are same");
+    } else if (time1 < time2) {
       comparison = SHP_COMPLEXTYPE_COMPARE_GT;
-    else
+      g_debug ("timer-complextype: time1 < time2");
+    } else {
       comparison = SHP_COMPLEXTYPE_COMPARE_LT;
+      g_debug ("timer-complextype: time1 > time2");
+    }
   }
 
 out:
