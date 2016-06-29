@@ -145,22 +145,22 @@ shp_complextype_new ()
 
 /**
  * shp_complextype_add_string:
- * @msg: a #ShpComplextype
+ * @self: a #ShpComplextype
  * @name: data's field name
  * @val: value
  *
  * Add a new key-value pair to a #ShpComplextype, value is of type string
  */
 void
-shp_complextype_add_string (ShpComplextype * msg, const gchar * name,
+shp_complextype_add_string (ShpComplextype * self, const gchar * name,
     const gchar * val)
 {
   ShpComplextypePrivate *priv;
 
-  g_return_if_fail (IS_SHP_COMPLEXTYPE (msg));
+  g_return_if_fail (IS_SHP_COMPLEXTYPE (self));
   g_return_if_fail (name != NULL);
 
-  priv = msg->priv;
+  priv = self->priv;
 
   _ShpValue *value = g_new0 (_ShpValue, 1);
   g_value_init (&value->value, G_TYPE_STRING);
@@ -170,21 +170,21 @@ shp_complextype_add_string (ShpComplextype * msg, const gchar * name,
 
 /**
  * shp_complextype_add_integer:
- * @msg: a #ShpComplextype
+ * @self: a #ShpComplextype
  * @name: data's field name
  * @val: value
  *
  * Add a new key-value pair to a #ShpComplextype, value is of type integer
  */
 void
-shp_complextype_add_integer (ShpComplextype * msg, const gchar * name, gint val)
+shp_complextype_add_integer (ShpComplextype * self, const gchar * name, gint val)
 {
   ShpComplextypePrivate *priv;
 
-  g_return_if_fail (IS_SHP_COMPLEXTYPE (msg));
+  g_return_if_fail (IS_SHP_COMPLEXTYPE (self));
   g_return_if_fail (name != NULL);
 
-  priv = msg->priv;
+  priv = self->priv;
 
   _ShpValue *value = g_new0 (_ShpValue, 1);
   g_value_init (&value->value, G_TYPE_INT);
@@ -194,21 +194,22 @@ shp_complextype_add_integer (ShpComplextype * msg, const gchar * name, gint val)
 
 /**
  * shp_complextype_add_double:
- * @msg: a #ShpComplextype
+ * @self: a #ShpComplextype
  * @name: data's field name
  * @val: value
  *
  * Add a new key-value pair to a #ShpComplextype, value is of type double
  */
 void
-shp_complextype_add_double (ShpComplextype * msg, const gchar * name, gdouble val)
+shp_complextype_add_double (ShpComplextype * self, const gchar * name,
+    gdouble val)
 {
   ShpComplextypePrivate *priv;
 
-  g_return_if_fail (IS_SHP_COMPLEXTYPE (msg));
+  g_return_if_fail (IS_SHP_COMPLEXTYPE (self));
   g_return_if_fail (name != NULL);
 
-  priv = msg->priv;
+  priv = self->priv;
 
   _ShpValue *value = g_new0 (_ShpValue, 1);
   g_value_init (&value->value, G_TYPE_DOUBLE);
@@ -218,21 +219,22 @@ shp_complextype_add_double (ShpComplextype * msg, const gchar * name, gdouble va
 
 /**
  * shp_complextype_add_boolean:
- * @msg: a #ShpComplextype
+ * @self: a #ShpComplextype
  * @name: data's field name
  * @val: value
  *
  * Add a new key-value pair to a #ShpComplextype, value is of type boolean
  */
 void
-shp_complextype_add_boolean (ShpComplextype * msg, const gchar * name, gboolean val)
+shp_complextype_add_boolean (ShpComplextype * self, const gchar * name,
+    gboolean val)
 {
   ShpComplextypePrivate *priv;
 
-  g_return_if_fail (IS_SHP_COMPLEXTYPE (msg));
+  g_return_if_fail (IS_SHP_COMPLEXTYPE (self));
   g_return_if_fail (name != NULL);
 
-  priv = msg->priv;
+  priv = self->priv;
 
   _ShpValue *value = g_new0 (_ShpValue, 1);
   g_value_init (&value->value, G_TYPE_BOOLEAN);
@@ -242,21 +244,21 @@ shp_complextype_add_boolean (ShpComplextype * msg, const gchar * name, gboolean 
 
 /**
  * shp_complextype_add_long:
- * @msg: a #ShpComplextype
+ * @self: a #ShpComplextype
  * @name: data's field name
  * @val: value
  *
  * Add a new key-value pair to a #ShpComplextype, value is of type long
  */
 void
-shp_complextype_add_long (ShpComplextype * msg, const gchar * name, glong val)
+shp_complextype_add_long (ShpComplextype * self, const gchar * name, glong val)
 {
   ShpComplextypePrivate *priv;
 
-  g_return_if_fail (IS_SHP_COMPLEXTYPE (msg));
+  g_return_if_fail (IS_SHP_COMPLEXTYPE (self));
   g_return_if_fail (name != NULL);
 
-  priv = msg->priv;
+  priv = self->priv;
 
   _ShpValue *value = g_new0 (_ShpValue, 1);
   g_value_init (&value->value, G_TYPE_LONG);
@@ -266,9 +268,9 @@ shp_complextype_add_long (ShpComplextype * msg, const gchar * name, glong val)
 
 /**
  * shp_complextype_has value:
- * @msg: a #ShpComplextype
+ * @self: a #ShpComplextype
  * @name: data's field name
- * @type: msg type
+ * @type: self type
  *
  * Check whether there is a field with name @name and of type @type in the
  * data. This function is normally called before calling any of the
@@ -277,16 +279,16 @@ shp_complextype_add_long (ShpComplextype * msg, const gchar * name, glong val)
  * Returns: TRUE if such a field exists and FALSE otherwise
  */
 gboolean
-shp_complextype_has_value (ShpComplextype * msg, const gchar * name, GType type)
+shp_complextype_has_value (ShpComplextype * self, const gchar * name, GType type)
 {
   ShpComplextypePrivate *priv;
   _ShpValue *value;
 
-  g_return_val_if_fail (IS_SHP_COMPLEXTYPE (msg), FALSE);
+  g_return_val_if_fail (IS_SHP_COMPLEXTYPE (self), FALSE);
   g_return_val_if_fail (name != NULL, FALSE);
   g_return_val_if_fail (G_TYPE_IS_FUNDAMENTAL (type), FALSE);
 
-  priv = msg->priv;
+  priv = self->priv;
 
   value = g_hash_table_lookup (priv->values, name);
   if (value == NULL)
@@ -300,7 +302,7 @@ shp_complextype_has_value (ShpComplextype * msg, const gchar * name, GType type)
 
 /**
  * shp_complextype_get_string:
- * @msg: a #ShpComplextype
+ * @self: a #ShpComplextype
  * @name: data's field name
  *
  * Returns the value of type string corresponding to @name
@@ -308,16 +310,16 @@ shp_complextype_has_value (ShpComplextype * msg, const gchar * name, GType type)
  * Returns: a value of type string
  */
 const gchar*
-shp_complextype_get_string (ShpComplextype * msg, const gchar * name)
+shp_complextype_get_string (ShpComplextype * self, const gchar * name)
 {
   ShpComplextypePrivate *priv;
   _ShpValue *value;
   const gchar *ret;
 
-  g_return_val_if_fail (IS_SHP_COMPLEXTYPE (msg), NULL);
+  g_return_val_if_fail (IS_SHP_COMPLEXTYPE (self), NULL);
   g_return_val_if_fail (name != NULL, NULL);
 
-  priv = msg->priv;
+  priv = self->priv;
 
   value = g_hash_table_lookup (priv->values, name);
   if (!value) {
@@ -335,7 +337,7 @@ shp_complextype_get_string (ShpComplextype * msg, const gchar * name)
 
 /**
  * shp_complextype_get_integer:
- * @msg: a #ShpComplextype
+ * @self: a #ShpComplextype
  * @name: data's field name
  *
  * Returns the value of type integer corresponding to @name
@@ -343,16 +345,17 @@ shp_complextype_get_string (ShpComplextype * msg, const gchar * name)
  * Returns: a value of type integer
  */
 gboolean
-shp_complextype_get_integer (ShpComplextype * msg, const gchar * name, gint * result)
+shp_complextype_get_integer (ShpComplextype * self, const gchar * name,
+    gint * result)
 {
   ShpComplextypePrivate *priv;
   _ShpValue *value;
 
-  g_return_val_if_fail (IS_SHP_COMPLEXTYPE (msg), FALSE);
+  g_return_val_if_fail (IS_SHP_COMPLEXTYPE (self), FALSE);
   g_return_val_if_fail (name != NULL, FALSE);
   g_return_val_if_fail (result != NULL, FALSE);
 
-  priv = msg->priv;
+  priv = self->priv;
 
   value = g_hash_table_lookup (priv->values, name);
   if (!value) {
@@ -370,7 +373,7 @@ shp_complextype_get_integer (ShpComplextype * msg, const gchar * name, gint * re
 
 /**
  * shp_complextype_get_double:
- * @msg: a #ShpComplextype
+ * @self: a #ShpComplextype
  * @name: data's field name
  *
  * Returns the value of type double corresponding to @name
@@ -378,16 +381,17 @@ shp_complextype_get_integer (ShpComplextype * msg, const gchar * name, gint * re
  * Returns: a value of type double
  */
 gboolean
-shp_complextype_get_double (ShpComplextype * msg, const gchar * name, gdouble * result)
+shp_complextype_get_double (ShpComplextype * self, const gchar * name,
+    gdouble * result)
 {
   ShpComplextypePrivate *priv;
   _ShpValue *value;
 
-  g_return_val_if_fail (IS_SHP_COMPLEXTYPE (msg), FALSE);
+  g_return_val_if_fail (IS_SHP_COMPLEXTYPE (self), FALSE);
   g_return_val_if_fail (name != NULL, FALSE);
   g_return_val_if_fail (result != NULL, FALSE);
 
-  priv = msg->priv;
+  priv = self->priv;
 
   value = g_hash_table_lookup (priv->values, name);
   if (!value) {
@@ -405,7 +409,7 @@ shp_complextype_get_double (ShpComplextype * msg, const gchar * name, gdouble * 
 
 /**
  * shp_complextype_get_boolean:
- * @msg: a #ShpComplextype
+ * @self: a #ShpComplextype
  * @name: data's field name
  *
  * Returns the value of type boolean corresponding to @name
@@ -413,17 +417,17 @@ shp_complextype_get_double (ShpComplextype * msg, const gchar * name, gdouble * 
  * Returns: a value of type boolean
  */
 gboolean
-shp_complextype_get_boolean (ShpComplextype * msg, const gchar * name,
+shp_complextype_get_boolean (ShpComplextype * self, const gchar * name,
     gboolean * result)
 {
   ShpComplextypePrivate *priv;
   _ShpValue *value;
 
-  g_return_val_if_fail (IS_SHP_COMPLEXTYPE (msg), FALSE);
+  g_return_val_if_fail (IS_SHP_COMPLEXTYPE (self), FALSE);
   g_return_val_if_fail (name != NULL, FALSE);
   g_return_val_if_fail (result != NULL, FALSE);
 
-  priv = msg->priv;
+  priv = self->priv;
 
   value = g_hash_table_lookup (priv->values, name);
   if (!value) {
@@ -441,7 +445,7 @@ shp_complextype_get_boolean (ShpComplextype * msg, const gchar * name,
 
 /**
  * shp_complextype_get_long:
- * @msg: a #ShpComplextype
+ * @self: a #ShpComplextype
  * @name: data's field name
  *
  * Returns the value of type long corresponding to @name
@@ -449,16 +453,17 @@ shp_complextype_get_boolean (ShpComplextype * msg, const gchar * name,
  * Returns: a value of type long
  */
 gboolean
-shp_complextype_get_long (ShpComplextype * msg, const gchar * name, glong * result)
+shp_complextype_get_long (ShpComplextype * self, const gchar * name,
+    glong * result)
 {
   ShpComplextypePrivate *priv;
   _ShpValue *value;
 
-  g_return_val_if_fail (IS_SHP_COMPLEXTYPE (msg), FALSE);
+  g_return_val_if_fail (IS_SHP_COMPLEXTYPE (self), FALSE);
   g_return_val_if_fail (name != NULL, FALSE);
   g_return_val_if_fail (result != NULL, FALSE);
 
-  priv = msg->priv;
+  priv = self->priv;
 
   value = g_hash_table_lookup (priv->values, name);
   if (!value) {
@@ -493,43 +498,43 @@ foreach_cb (gpointer key, gpointer val, gpointer data)
 
 /**
  * shp_complextype_size:
- * @msg: a #ShpComplextype
+ * @self: a #ShpComplextype
  *
- * Returns number of parameters in @msg
+ * Returns number of parameters in @self
  *
- * Returns: number of parameters in @msg
+ * Returns: number of parameters in @self
  */
 guint
-shp_complextype_size (ShpComplextype * msg)
+shp_complextype_size (ShpComplextype * self)
 {
   ShpComplextypePrivate *priv;
 
-  g_return_if_fail (IS_SHP_COMPLEXTYPE (msg));
+  g_return_if_fail (IS_SHP_COMPLEXTYPE (self));
 
-  priv = msg->priv;
+  priv = self->priv;
 
   return g_hash_table_size (priv->values);
 }
 
 /**
  * shp_complextype_foreach:
- * @msg: a #ShpComplextype
+ * @self: a #ShpComplextype
  * @func: a #ShpComplextypeFunc to be called
  * @user_data: user data to be submitted when calling @func
  *
- * Calls @func for each parameter in @msg
+ * Calls @func for each parameter in @self
  */
 void
-shp_complextype_foreach (ShpComplextype * msg, ShpComplextypeFunc func,
+shp_complextype_foreach (ShpComplextype * self, ShpComplextypeFunc func,
     gpointer user_data)
 {
   ShpComplextypePrivate *priv;
   _ShpFuncData *func_data;
 
-  g_return_if_fail (IS_SHP_COMPLEXTYPE (msg));
+  g_return_if_fail (IS_SHP_COMPLEXTYPE (self));
   g_return_if_fail (func != NULL);
 
-  priv = msg->priv;
+  priv = self->priv;
 
   func_data = g_new0 (_ShpFuncData, 1);
   func_data->func = func;
@@ -540,16 +545,25 @@ shp_complextype_foreach (ShpComplextype * msg, ShpComplextypeFunc func,
   g_free (func_data);
 }
 
+/**
+ * shp_complextype_get_field_type:
+ * @self: a #ShpComplextype
+ * @name: field name
+ *
+ * Gets the type of the field @name
+ *
+ * Returns: a #GType
+ */
 GType
-shp_complextype_get_field_type (ShpComplextype * msg, const gchar * name)
+shp_complextype_get_field_type (ShpComplextype * self, const gchar * name)
 {
   ShpComplextypePrivate *priv;
   _ShpValue *value;
 
-  g_return_val_if_fail (IS_SHP_COMPLEXTYPE (msg), G_TYPE_INVALID);
+  g_return_val_if_fail (IS_SHP_COMPLEXTYPE (self), G_TYPE_INVALID);
   g_return_val_if_fail (name != NULL, G_TYPE_INVALID);
 
-  priv = msg->priv;
+  priv = self->priv;
 
   value = g_hash_table_lookup (priv->values, name);
   if (!value) {

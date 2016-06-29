@@ -17,7 +17,8 @@
  */
 
 /*
- * ShpMessage is the basic unit of passing data from plugins.
+ * ShpMessage is the basic unit of passing data from components installed on
+ * the system. Check .c file for more details.
  */
 
 #ifndef __SHP_MESSAGE_H__
@@ -40,6 +41,12 @@ G_BEGIN_DECLS
 typedef struct _ShpMessage ShpMessage;
 typedef struct _ShpMessagePrivate ShpMessagePrivate;
 typedef struct _ShpMessageClass ShpMessageClass;
+
+typedef enum {
+  SHP_MESSAGE_EVENT,
+  SHP_MESSAGE_CONFIGURATION,
+  SHP_MESSAGE_UNKNOWN
+} ShpMessageType;
 
 typedef void (*ShpMessageFunc) (const gchar * name, const GValue * value,
     gpointer user_data);
@@ -89,6 +96,9 @@ void shp_message_foreach (ShpMessage * msg, ShpMessageFunc func, gpointer user_d
 const gchar* shp_message_get_name (ShpMessage * msg);
 const gchar* shp_message_get_source_path (const ShpMessage * msg);
 const gchar* shp_message_get_destination_path (const ShpMessage * msg);
+
+ShpMessageType shp_message_get_message_type (ShpMessage * msg);
+void shp_message_set_message_type (ShpMessage * msg, ShpMessageType type);
 
 gchar* shp_message_to_string (ShpMessage * msg);
 

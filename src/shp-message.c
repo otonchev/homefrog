@@ -17,7 +17,20 @@
  */
 
 /*
- * ShpMessage is the basic unit of passing data from plugins.
+ * ShpMessage is the basic unit of passing data from components installed on
+ * the system. There are two main types of messages: Events and Configurations.
+ * Events are messages emitted by plugins to notify other componenets that an
+ * event has occured but also messages sent to plugins to trigger actions.
+ * Configurations on the othger hand are messages emitted by componenets in
+ * general to notify that certain configuration (a set of conditions and a
+ * trigger) exists.
+ *
+ * Each message may have two paths set: source path and destination path.
+ * source path indicates which component has emitted the message, destination
+ * path which component the message is intended for.
+ * Plugins will normally set the source path only leaving destination path
+ * empty while components conrolling other components will do the other way
+ * around.
  */
 
 #include <stdio.h>
@@ -33,12 +46,16 @@ enum
   PROP_NAME,
   PROP_SOURCE_PATH,
   PROP_DESTINATION_PATH,
+  PROP_TYPE,
   PROP_LAST
 };
 
 #define DEFAULT_NAME "no_name"
 #define DEFAULT_SOURCE_PATH NULL
 #define DEFAULT_DESTINATION_PATH NULL
+#define MESSAGE_TYPE_DEFAULT SHP_MESSAGE_EVENT
+
+#define SHP_MESSAGE_TYPE_TYPE (shp_message_type_get_type())
 
 G_DEFINE_TYPE (ShpMessage, shp_message, G_TYPE_OBJECT);
 
@@ -47,6 +64,7 @@ struct _ShpMessagePrivate {
   gchar *name;
   gchar *source_path;
   gchar *destination_path;
+  ShpMessageType type;
 };
 
 static void shp_message_finalize (GObject * object);
@@ -58,6 +76,26 @@ static void shp_message_set_property (GObject * object, guint propid,
 typedef struct {
   GValue value;
 } _ShpValue;
+
+GType
+shp_message_type_get_type (void)
+{
+  static GType shp_message_type_type = 0;
+
+  if (g_once_init_enter (&shp_message_type_type)) {
+    GType type;
+    static const GEnumValue message_type[] = {
+      {SHP_MESSAGE_EVENT,         "Event",         "Event"        },
+      {SHP_MESSAGE_CONFIGURATION, "Configuration", "Configuration"},
+      {0,                         NULL,            NULL           }
+    };
+
+    type = g_enum_register_static ("ShpMessageType", message_type);
+    g_once_init_leave (&shp_message_type_type, type);
+  }
+
+  return shp_message_type_type;
+}
 
 static void
 shp_message_class_init (ShpMessageClass * klass)
@@ -83,6 +121,10 @@ shp_message_class_init (ShpMessageClass * klass)
       g_param_spec_string ("destination-path", "Destination path",
           "Path to the destination of this message", DEFAULT_DESTINATION_PATH,
           G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
+  g_object_class_install_property (gobject_class, PROP_TYPE,
+      g_param_spec_enum ("type", "Message type",
+          "The Message type", SHP_MESSAGE_TYPE_TYPE,
+          MESSAGE_TYPE_DEFAULT, G_PARAM_READWRITE));
 }
 
 static void
@@ -103,6 +145,9 @@ shp_message_get_property (GObject * object, guint propid, GValue * value,
       break;
     case PROP_DESTINATION_PATH:
       g_value_set_string (value, priv->destination_path);
+      break;
+    case PROP_TYPE:
+      g_value_set_enum (value, priv->type);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, propid, pspec);
@@ -130,6 +175,9 @@ shp_message_set_property (GObject * object, guint propid, const GValue * value,
     case PROP_DESTINATION_PATH:
       g_free (priv->destination_path);
       priv->destination_path = g_strdup (g_value_get_string (value));
+      break;
+    case PROP_TYPE:
+      priv->type = g_value_get_enum (value);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, propid, pspec);
@@ -160,6 +208,7 @@ shp_message_init (ShpMessage * self)
   priv->name = g_strdup (DEFAULT_NAME);
   priv->source_path = g_strdup (DEFAULT_SOURCE_PATH);
   priv->destination_path = g_strdup (DEFAULT_DESTINATION_PATH);
+  priv->type = MESSAGE_TYPE_DEFAULT;
 }
 
 static void
@@ -182,9 +231,11 @@ shp_message_finalize (GObject * object)
 
 /**
  * shp_message_new:
+ * @source_path: path for the messages (normally the path of the component
+ *               creating the message)
  *
- * Creates a new instance of #ShpMessage. Free with g_object_unref()
- * when no-longer needed.
+ * Creates a new instance of #ShpMessage. This function is normally used by
+ * plugins to generate result. Free with g_object_unref() when no-longer needed.
  *
  * Returns: a new instance of #ShpMessage
  */
@@ -194,6 +245,16 @@ shp_message_new (const gchar * source_path)
   return g_object_new (SHP_MESSAGE_TYPE, "source-path", source_path, NULL);
 }
 
+/**
+ * shp_message_new:
+ * @destination_path: path for the messages (normally the path of the component
+ *                    to receive and process the message)
+ *
+ * Creates a new instance of #ShpMessage inetnded to be used for controlling a
+ * plugin. Free with g_object_unref()  when no-longer needed.
+ *
+ * Returns: a new instance of #ShpMessage
+ */
 ShpMessage*
 shp_message_new_command (const gchar * destination_path)
 {
@@ -202,6 +263,15 @@ shp_message_new_command (const gchar * destination_path)
 }
 
 /* command=(string)on&test=(string)blabla */
+
+/**
+ * shp_message_new:
+ *
+ * Creates a new instance of #ShpMessage. Free with g_object_unref()
+ * when no-longer needed.
+ *
+ * Returns: a new instance of #ShpMessage
+ */
 ShpMessage*
 shp_message_new_command_from_string (const gchar * destination_path,
     const gchar * options)
@@ -301,6 +371,14 @@ shp_message_add_string (ShpMessage * msg, const gchar * name,
   g_hash_table_insert (priv->values, g_strdup (name), value);
 }
 
+/**
+ * shp_message_add_string:
+ * @msg: a #ShpMessage
+ * @name: data's field name
+ * @val: value
+ *
+ * Add a new key-value pair to a #ShpMessage, value is of type #ShpComplexType.
+ */
 void
 shp_message_add_complextype (ShpMessage * msg, const gchar * name,
     ShpComplextype * val)
@@ -422,7 +500,7 @@ shp_message_add_long (ShpMessage * msg, const gchar * name, glong val)
  * @type: msg type
  *
  * Check whether there is a field with name @name and of type @type in the
- * data. This function is normally called before calling any of the
+ * message. This function is normally called before calling any of the
  * shp_message_get_*() set of functions.
  *
  * Returns: TRUE if such a field exists and FALSE otherwise
@@ -717,6 +795,14 @@ shp_message_foreach (ShpMessage * msg, ShpMessageFunc func,
   g_free (func_data);
 }
 
+/**
+ * shp_message_get_field_type:
+ * @name: field name
+ *
+ * Gets the type of the field with @name
+ *
+ * Returns: #GType
+ */
 GType
 shp_message_get_field_type (ShpMessage * msg, const gchar * name)
 {
@@ -736,6 +822,14 @@ shp_message_get_field_type (ShpMessage * msg, const gchar * name)
   return G_VALUE_TYPE (&value);
 }
 
+/**
+ * shp_message_get_name:
+ * @msg: a #ShpMessage
+ *
+ * Gets the name of the message
+ *
+ * Returns: the name for @msg (transfer-none)
+ */
 const char*
 shp_message_get_name (ShpMessage * msg)
 {
@@ -747,6 +841,14 @@ shp_message_get_name (ShpMessage * msg)
   return priv->name;
 }
 
+/**
+ * shp_message_get_source_path:
+ * @msg: a #ShpMessage
+ *
+ * Gets source path
+ *
+ * Returns: source path (transfer-none)
+ */
 const char*
 shp_message_get_source_path (const ShpMessage * msg)
 {
@@ -758,6 +860,14 @@ shp_message_get_source_path (const ShpMessage * msg)
   return priv->source_path;
 }
 
+/**
+ * shp_message_get_destination_path:
+ * @msg: a #ShpMessage
+ *
+ * Gets destination path
+ *
+ * Returns: destination path (transfer-none)
+ */
 const char*
 shp_message_get_destination_path (const ShpMessage * msg)
 {
@@ -798,6 +908,14 @@ print_pair (gpointer key, gpointer val, gpointer user_data)
   }
 }
 
+/**
+ * shp_message_to_string:
+ * @msg: a #ShpMessage
+ *
+ * Creates a string representing @msg, can be pretty printed
+ *
+ * Returns: newly allocated string, free with g_free()
+ */
 gchar*
 shp_message_to_string (ShpMessage * msg)
 {
@@ -813,6 +931,14 @@ shp_message_to_string (ShpMessage * msg)
   return g_string_free (str, FALSE);
 }
 
+/**
+ * shp_message_copy:
+ * @msg: a #ShpMessage
+ *
+ * Creates a copy of @message
+ *
+ * Returns: new #ShpMessage, free with g_object_unref when no-longer needed
+ */
 ShpMessage*
 shp_message_copy (const ShpMessage * message)
 {
@@ -844,4 +970,38 @@ shp_message_copy (const ShpMessage * message)
   }
 
   return result;
+}
+
+/**
+ * shp_message_get_message_type:
+ * @msg: a #ShpMessage
+ *
+ * Gets the type of message
+ *
+ * Returns: #ShpMessageType
+ */
+ShpMessageType
+shp_message_get_message_type (ShpMessage * msg)
+{
+  ShpMessageType type;
+
+  g_return_val_if_fail (IS_SHP_MESSAGE (msg), SHP_MESSAGE_UNKNOWN);
+
+  g_object_get (G_OBJECT (msg), "type", &type, NULL);
+  return type;
+}
+
+/**
+ * shp_message_set_message_type:
+ * @msg: a #ShpMessage
+ * @type: #ShpMessageType
+ *
+ * Sets the type
+ */
+void
+shp_message_set_message_type (ShpMessage * msg, ShpMessageType type)
+{
+  g_return_if_fail (IS_SHP_MESSAGE (msg));
+
+  g_object_set (G_OBJECT (msg), "type", type, NULL);
 }

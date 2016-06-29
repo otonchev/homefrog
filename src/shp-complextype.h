@@ -59,22 +59,22 @@ struct _ShpComplextypeClass {
 
 ShpComplextype* shp_complextype_new ();
 
-void shp_complextype_add_string (ShpComplextype * msg, const gchar * name, const gchar * value);
-void shp_complextype_add_integer (ShpComplextype * msg, const gchar * name, gint value);
-void shp_complextype_add_double (ShpComplextype * msg, const gchar * name, gdouble value);
-void shp_complextype_add_boolean (ShpComplextype * msg, const gchar * name, gboolean value);
-void shp_complextype_add_long (ShpComplextype * msg, const gchar * name, glong value);
+void shp_complextype_add_string (ShpComplextype * self, const gchar * name, const gchar * value);
+void shp_complextype_add_integer (ShpComplextype * self, const gchar * name, gint value);
+void shp_complextype_add_double (ShpComplextype * self, const gchar * name, gdouble value);
+void shp_complextype_add_boolean (ShpComplextype * self, const gchar * name, gboolean value);
+void shp_complextype_add_long (ShpComplextype * self, const gchar * name, glong value);
 
-const gchar* shp_complextype_get_string (ShpComplextype * msg, const gchar * name);
-gboolean shp_complextype_get_integer (ShpComplextype * msg, const gchar * name, gint * value);
-gboolean shp_complextype_get_double (ShpComplextype * msg, const gchar * name, gdouble * value);
-gboolean shp_complextype_get_boolean (ShpComplextype * msg, const gchar * name, gboolean * value);
-gboolean shp_complextype_get_long (ShpComplextype * msg, const gchar * name, glong * value);
+const gchar* shp_complextype_get_string (ShpComplextype * self, const gchar * name);
+gboolean shp_complextype_get_integer (ShpComplextype * self, const gchar * name, gint * value);
+gboolean shp_complextype_get_double (ShpComplextype * self, const gchar * name, gdouble * value);
+gboolean shp_complextype_get_boolean (ShpComplextype * self, const gchar * name, gboolean * value);
+gboolean shp_complextype_get_long (ShpComplextype * self, const gchar * name, glong * value);
 
-gboolean shp_complextype_has_value (ShpComplextype * msg, const gchar * name, GType type);
-GType shp_complextype_get_field_type (ShpComplextype * msg, const gchar * name);
-guint shp_complextype_size (ShpComplextype * msg);
-void shp_complextype_foreach (ShpComplextype * msg, ShpComplextypeFunc func, gpointer user_data);
+gboolean shp_complextype_has_value (ShpComplextype * self, const gchar * name, GType type);
+GType shp_complextype_get_field_type (ShpComplextype * self, const gchar * name);
+guint shp_complextype_size (ShpComplextype * self);
+void shp_complextype_foreach (ShpComplextype * self, ShpComplextypeFunc func, gpointer user_data);
 
 GType shp_complextype_get_type (void);
 
