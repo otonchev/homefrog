@@ -115,14 +115,17 @@ room and the time:
     ShpPlugin *temperature;
     ShpPlugin *telldus;
 
-    /* load REST plugin */
-    http = shp_http_new (6666);
+    /* load REST plugin, API will be available on port 1234 */
+    http = shp_http_new (1234);
     rest = shp_plugin_factory_create ("rest", NULL);
     /* this file is optional and describes how different plugins should be
      * visualised */
     g_object_set (G_OBJECT (rest), "config-file", "src/homefrog-rest.config",
         NULL);
+    /* provide HTTP instance to the REST plugin */
     g_object_set (G_OBJECT (rest), "http", http, NULL);
+    /* expose all /home* devices, if other devices are present, they will not
+     * be visible unless unabled the same way */
     g_signal_emit_by_name (G_OBJECT (rest), "add-device-path", "/home*");
 
     /* load timer */
@@ -219,6 +222,48 @@ lines below:
 
 To turn off both heaters simultaneously call
 "/home/floor1/LivingRoom/TurnHeatersOff" as shown below.
+
+
+Example 3:
+----------
+
+Turn-on Lamp1 and Lamp2 in the Living room on floor 1 on Wednesdays and
+Thursdays at 19:00.
+
+    /* create scene with two events */
+    scene = shp_scene_new (g_object_ref (bus));
+    event = shp_message_new_command ("/home/floor1/LivingRoom/Lamp1");
+    shp_message_add_string (event, "command", "on");
+    shp_scene_add_event (scene, event);
+    scene = shp_scene_new (g_object_ref (bus));
+    event = shp_message_new_command ("/home/floor1/LivingRoom/Lamp2");
+    shp_message_add_string (event, "command", "on");
+    shp_scene_add_event (scene, event);
+
+    /* create the condition to be checked before activating the scene */
+    condition_time = shp_condition_new ("/clock/timer");
+    /* Wednesday 19:00 */
+    complex_type = shp_complextype_factory_create ("timer.datetime");
+    shp_complextype_add_integer (complex_type, "week_day", 3); /* Wednesday */
+    shp_complextype_add_integer (complex_type, "hour", 19);
+    shp_complextype_add_integer (complex_type, "minutes", 0);
+    shp_condition_add_complextype_option (condition_time, "datetime",
+        complex_type, SHP_CONDITION_OPERATOR_EQ);
+    /* Thursday 19:00 */
+    complex_type = shp_complextype_factory_create ("timer.datetime");
+    shp_complextype_add_integer (complex_type, "week_day", 4); /* Thursday */
+    shp_complextype_add_integer (complex_type, "hour", 19);
+    shp_complextype_add_integer (complex_type, "minutes", 0);
+    shp_condition_add_complextype_option (condition_time, "datetime",
+        complex_type, SHP_CONDITION_OPERATOR_EQ);
+
+    /* add 2 conditions and scene to rule */
+    rule = shp_rule_new ();
+    shp_rule_add_condition (rule, condition_time);
+    shp_rule_set_scene (rule, scene);
+
+    /* let the controller know about our new rule */
+    shp_controller_add_rule (controller, rule);
 
 
 Accessing the REST API:

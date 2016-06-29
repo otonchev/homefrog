@@ -105,7 +105,8 @@ main (int argc, char *argv[])
         NULL);
     /* provide HTTP instance to the REST plugin */
     g_object_set (G_OBJECT (rest), "http", http, NULL);
-    /* expose all /home devices */
+    /* expose all /home devices, if other devices are present, they will not
+     * be visible unless unabled the same way */
     g_signal_emit_by_name (G_OBJECT (rest), "add-device-path", "/home*");
 
     /* load timer */
