@@ -195,7 +195,6 @@ main (int argc, char *argv[])
     event = shp_message_new_command ("/home/floor1/LivingRoom/Lamp1");
     shp_message_add_string (event, "command", "on");
     shp_scene_add_event (scene, event);
-    scene = shp_scene_new (g_object_ref (bus));
     event = shp_message_new_command ("/home/floor1/LivingRoom/Lamp2");
     shp_message_add_string (event, "command", "on");
     shp_scene_add_event (scene, event);
