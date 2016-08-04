@@ -283,7 +283,7 @@ To get a description on how all the different plugins are to be visualised on
 the Web (all that is generated based on the content of the rest configure file:
 the src/homefrog-rest.config):
 
-GET http://192.168.0.240:6666/web
+GET http://example.com:6666/web
 
 >output:
 
