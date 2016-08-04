@@ -47,9 +47,7 @@ Features under development:
 
     * sorting out format for configure files (so that app can be configured
           without writing C-code :-))
-    * Web pages (not really started yet, working on necessary underlying
-          infrastructure, although creating simple Web UI can be done with no
-          effort even today)
+    * Web pages (simple Web UI is available for now)
 
 
 How to build and run:
