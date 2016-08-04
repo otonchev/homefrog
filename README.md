@@ -276,7 +276,7 @@ The API is provided by the "rest" plugin and returns Json responses.
 It is automatically enabled when the plugin is loaded.
 
 
-http://<ip>/web
+http://example.com/web
 ---------------
 
 To get a description on how all the different plugins are to be visualised on
@@ -327,12 +327,12 @@ GET http://192.168.0.240:6666/web
         }
     }
 
-http://<ip>/home*
+http://example.com/home*
 -----------------
 
 To display all components running on the system:
 
-GET http://192.168.0.240:6666/home
+GET http://example.com:6666/home
 
 >output:
 
@@ -399,7 +399,7 @@ GET http://192.168.0.240:6666/home
 
 To display all sensors in the Living room on the 1st floor:
 
-GET http://192.168.0.240:6666/home/floor1/LivingRoom/
+GET http://example.com:6666/home/floor1/LivingRoom/
 
 >output:
 
@@ -422,7 +422,7 @@ GET http://192.168.0.240:6666/home/floor1/LivingRoom/
 
 To display status for the Heater in the Living room:
 
-GET http://192.168.0.240:6666/home/floor1/LivingRoom/Heater
+GET http://example.com:6666/home/floor1/LivingRoom/Heater
 
 >output:
 
@@ -437,7 +437,7 @@ GET http://192.168.0.240:6666/home/floor1/LivingRoom/Heater
 
 To display history of all status updates for a particular sensor:
 
-GET http://192.168.0.240:6666/home/floor1/LivingRoom/Temperature?history
+GET http://example.com:6666/home/floor1/LivingRoom/Temperature?history
 
 >output:
 
@@ -520,8 +520,8 @@ GET http://192.168.0.240:6666/home/floor1/LivingRoom/Temperature?history
 
 To activate the Heater in the Living room on floor 1:
 
-POST http://192.168.0.240:6666/home/floor1/LivingRoom/Heater
+POST http://example.com:6666/home/floor1/LivingRoom/Heater
 
 To activate scene "TurnHeatersOff":
 
-POST http://192.168.0.240:6666/home/floor1/LivingRoom/TurnHeatersOff
+POST http://example.com:6666/home/floor1/LivingRoom/TurnHeatersOff
