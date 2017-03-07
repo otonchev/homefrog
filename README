@@ -25,7 +25,7 @@ DEMO (minimalistic web interface):
 The web page uses the REST API and dynamically generates content. For more info
 look in the web/ folder.
 
-http://ogy.noip.me:3456/demo.html
+http://ogy.ddns.net:3456/demo.html
 
 Screenshot:
 
@@ -35,8 +35,8 @@ https://raw.githubusercontent.com/otonchev/homefrog/master/images/homefrog.png
 DEMO (REST API, see below for description):
 -------------------------------------------
 
-http://ogy.noip.me:5678/home
-http://ogy.noip.me:5678/web
+http://ogy.ddns.net:5678/home
+http://ogy.ddns.net:5678/web
 
 
 Features under development:
